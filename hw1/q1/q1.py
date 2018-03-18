@@ -15,7 +15,11 @@ datas_set = pd.DataFrame(0, index=list(set(datas['pluno'])), columns=list(set(da
 
 # 根据行列索引将获得的聚合值放入矩阵当中，并且在放入前进行四舍五入
 for index, row in amts_set.iterrows():
-    datas_set.loc[row['pluno'], [row['vipno']]] = round(row['amt'])
+    af = np.floor(row['amt'])
+    ad = row['amt'] - af
+    if ad >= 0.5:
+        af = af + 1
+    datas_set.loc[row['pluno'], [row['vipno']]] = int(af)
 
 # datas_set.to_csv('test2.csv')
 
