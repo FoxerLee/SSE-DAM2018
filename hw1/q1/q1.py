@@ -7,7 +7,7 @@ datas = pd.read_csv('trade.csv', usecols=['vipno', 'pluno', 'amt'])
 
 # 利用pandas的groupby函数做聚合运算
 amts_set = datas.groupby([datas['vipno'], datas['pluno']], as_index = False).agg({'amt': sum})
-# 修改DataFrame的列中数据格式为object，否则后面输出会将vipno和pluno转换为float64
+# 修改DataFrame的列中数据格式为object，否则后面会将vipno和pluno转换为float64
 amts_set[['vipno', 'pluno']] = amts_set[['vipno', 'pluno']].astype('object')
 
 # 将vipno和pluno提取出来然后去重，新建一个矩阵
