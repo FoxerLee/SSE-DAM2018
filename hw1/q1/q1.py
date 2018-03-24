@@ -26,7 +26,8 @@ def get_data():
         ad = row['amt'] - af
         if ad >= 0.5:
             af = af + 1
-        datas_set.loc[row['pluno'], [row['vipno']]] = int(af)
+        # 使用at会比loc快很多
+        datas_set.at[row['pluno'], row['vipno']] = int(af)
 
     # 将DataFrame格式的数据转换为numpy中的array格式
     datas_matrix = datas_set.as_matrix()
@@ -68,4 +69,4 @@ if __name__ == '__main__':
     p_hash_size = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5]
     distance_func = ["euclidean", "hamming", "true_euclidean", "centred_euclidean", "cosine", "l1norm"]
 
-    lsh(p_hash_size[0], distance_func[5])
+    lsh(p_hash_size[1], distance_func[5])
