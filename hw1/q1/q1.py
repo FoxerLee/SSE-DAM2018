@@ -10,7 +10,7 @@ def get_data():
     利用pandas包，从csv文件中提取所需数据，聚合后转换为矩阵格式
     :return: datas_set为DataFrame格式的矩阵和datas_matrix为array格式的矩阵
     """
-    datas = pd.read_csv('trade.csv', usecols=['vipno', 'pluno', 'amt'])
+    datas = pd.read_csv('/Users/liyuan/Documents/数据分析与数据挖掘/SSE-DAM2018/hw1/trade.csv', usecols=['vipno', 'pluno', 'amt'])
 
     # 利用pandas的groupby函数做聚合运算
     amts_set = datas.groupby([datas['vipno'], datas['pluno']], as_index = False).agg({'amt': sum})
@@ -60,7 +60,7 @@ def lsh(p_hash_size, distance_func):
     for res in lsh.query(datas_matrix[:, random_vipno], num_results=6, distance_func=distance_func):
         vipno_res.append(res[0][1])
     print("knn output(from 1 to 5): {}".format(vipno_res[1:]))
-    return vipno_res[1:]
+    return vipno_res[1:], datas_set.columns[random_vipno]
 
 
 if __name__ == '__main__':
@@ -69,4 +69,4 @@ if __name__ == '__main__':
     p_hash_size = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5]
     distance_func = ["euclidean", "hamming", "true_euclidean", "centred_euclidean", "cosine", "l1norm"]
 
-    lsh(p_hash_size[1], distance_func[5])
+    res, random_vipno = lsh(p_hash_size[0], distance_func[5])
