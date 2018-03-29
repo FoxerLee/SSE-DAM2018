@@ -40,8 +40,8 @@ def K_Means():
     # print(type(datas_matrix_T[0][0]))
     # vipno_nums 为vipno去重后的总数
     vipno_nums = len(datas_matrix[0])
-    # 初始的的聚类数量k ≈ √n/2
-    start_n_cluster = int(math.sqrt(vipno_nums)/2)
+    # 初始的的聚类数量k ≈ √(n/2)
+    start_n_cluster = int(math.sqrt(vipno_nums/2))
 
     range_n_clusters = []
     # 做k的遍历取值
