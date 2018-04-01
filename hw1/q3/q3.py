@@ -1,5 +1,6 @@
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import math
@@ -64,26 +65,32 @@ def eps(minPts):
     return res[len(res)-10:-1]
     # return res
 
+
 def dbscan(minPts):
     datas_set, datas_matrix = get_data()
     res_vipno, random_vipno = q1.lsh(0.01, "l1norm")
 
     datas_matrix_T = datas_matrix.T
+    # X = datas_matrix_T
+    X = StandardScaler().fit_transform(datas_matrix_T)
+    print(len(X))
+    print(len(datas_matrix_T))
     all_eps = eps(minPts)
 
     # 对于每一个k值，求得silhouette系数
     range_silhouette_avg = []
     for e in all_eps:
-        db = DBSCAN(eps=e, min_samples=minPts).fit(datas_matrix_T)
+        db = DBSCAN(eps=e, min_samples=minPts).fit(X)
 
         cluster_labels = db.labels_
+        print(len(cluster_labels))
         n_cluster = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
 
         print("when eps =", e,
               "there are", n_cluster, "clusters")
 
         # 获得silhouette分数
-        silhouette_avg = silhouette_score(datas_matrix_T, cluster_labels)
+        silhouette_avg = silhouette_score(X, db.labels_)
         range_silhouette_avg.append(silhouette_avg)
         print("For n_clusters =", n_cluster,
               "The average silhouette_score is :", silhouette_avg)

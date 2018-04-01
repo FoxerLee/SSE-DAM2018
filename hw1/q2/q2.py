@@ -1,5 +1,6 @@
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import math
@@ -41,6 +42,7 @@ def k_means():
     res_vipno, random_vipno = q1.lsh(0.01, "l1norm")
 
     datas_matrix_T = datas_matrix.T
+    X = StandardScaler().fit_transform(datas_matrix_T)
     # print(type(datas_matrix_T[0][0]))
     # vipno_nums 为vipno去重后的总数
     vipno_nums = len(datas_matrix[0])
@@ -57,9 +59,9 @@ def k_means():
     for n_cluster in range_n_clusters:
 
         clusterer = KMeans(n_clusters=n_cluster)
-        cluster_labels = clusterer.fit_predict(datas_matrix_T)
+        cluster_labels = clusterer.fit_predict(X)
         # 获得silhouette分数
-        silhouette_avg = silhouette_score(datas_matrix_T, cluster_labels)
+        silhouette_avg = silhouette_score(X, cluster_labels)
         range_silhouette_avg.append(silhouette_avg)
         print("For n_clusters =", n_cluster,
               "The average silhouette_score is :", silhouette_avg)

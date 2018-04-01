@@ -12,4 +12,7 @@ SSE-DAM2018: Data Analysis and Mining Homework
 
 - 利用Silhouette系数评价 k-means 聚类质量
 - Silhouette系数原理解释：https://blog.csdn.net/wangxiaopeng0329/article/details/53542606
-- ​
+
+### q3
+
+- 针对eps的取值，参考k-距离曲线图法：http://shiyanjun.cn/archives/1288.html
