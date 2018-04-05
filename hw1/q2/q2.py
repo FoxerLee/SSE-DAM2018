@@ -1,5 +1,6 @@
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
@@ -43,6 +44,9 @@ def k_means():
 
     datas_matrix_T = datas_matrix.T
     X = StandardScaler().fit_transform(datas_matrix_T)
+    # 尝试做降维操作
+    pca = PCA(n_components=2)
+    X = pca.fit_transform(X)
     # print(type(datas_matrix_T[0][0]))
     # vipno_nums 为vipno去重后的总数
     vipno_nums = len(datas_matrix[0])
@@ -84,8 +88,6 @@ def k_means():
     plt.ylabel('The silhouette coefficient values')
     plt.legend()
     plt.show()
-
-
 
 
 if __name__ == '__main__':

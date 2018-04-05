@@ -1,5 +1,6 @@
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
@@ -42,7 +43,8 @@ def eps(minPts):
     datas_matrix_T = datas_matrix.T
 
     # print(type(datas_matrix_T[0]))
-
+    pca = PCA(n_components=2)
+    datas_matrix_T = pca.fit_transform(datas_matrix_T)
     res = []
     for row1 in datas_matrix_T:
         temp = []
@@ -71,15 +73,19 @@ def dbscan(minPts):
     res_vipno, random_vipno = q1.lsh(0.01, "l1norm")
 
     datas_matrix_T = datas_matrix.T
-    # X = datas_matrix_T
-    X = StandardScaler().fit_transform(datas_matrix_T)
+    X = datas_matrix_T
+    # 尝试做降维操作
+    pca = PCA(n_components=2)
+    X = pca.fit_transform(X)
+    # X = StandardScaler().fit_transform(datas_matrix_T)
     # print(len(X))
     # print(len(datas_matrix_T))
     all_eps = eps(minPts)
 
     # 对于每一个k值，求得silhouette系数
     range_silhouette_avg = []
-    for e in all_eps:
+    # for e in all_eps:
+    for e in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
         db = DBSCAN(eps=e, min_samples=minPts).fit(X)
 
         cluster_labels = db.labels_
@@ -107,7 +113,7 @@ def dbscan(minPts):
               "There are", res, "in the same cluster as KMeans predicted")
 
         # 做Silhouette系数值-k值的函数图
-    plt.plot(all_eps, range_silhouette_avg, 'ro-')
+    plt.plot([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], range_silhouette_avg, 'ro-')
     plt.title('Silhouette-k line chart')
     plt.xlabel('eps values')
     plt.ylabel('The silhouette coefficient values')

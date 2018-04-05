@@ -7,6 +7,7 @@ SSE-DAM2018: Data Analysis and Mining Homework
 ### q1
 - 利用局部敏感哈希模拟实现KNN
 - ⚠️：所用到的lshash包请参考源代码，具体地址：https://github.com/kayzhu/LSHash/blob/master/lshash/lshash.py
+- 距离函数选择：https://dataminingguide.books.yourtion.com/chapter-2/chapter-2-3.html
 
 ### q2
 
@@ -20,4 +21,3 @@ SSE-DAM2018: Data Analysis and Mining Homework
 ### q4
 
 - GMM算法 介绍http://www.cnblogs.com/ooon/p/5790210.html
-

@@ -48,7 +48,7 @@ def gmm_kmeans(n_cluster=2):
     clusterer = KMeans(n_clusters=n_cluster)
     y_train = clusterer.fit_predict(X)
 
-    estimator = GaussianMixture(n_components=n_cluster, covariance_type='full')
+    estimator = GaussianMixture(n_components=n_cluster, covariance_type='diag')
 
     # 我们假定KMeans是真实的聚类结果，那么我们可以预先确定部分GMM参数
     estimator.means_init = np.array([X[y_train == i].mean(axis=0)
@@ -73,7 +73,7 @@ def gmm_dbscan(minPts=5, e=1300):
     y_train = db.labels_
     n_cluster = len(set(y_train)) - (1 if -1 in y_train else 0)
 
-    estimator = GaussianMixture(n_components=n_cluster, covariance_type='full')
+    estimator = GaussianMixture(n_components=n_cluster, covariance_type='tied')
 
     # 我们假定KMeans是真实的聚类结果，那么我们可以预先确定部分GMM参数
     estimator.means_init = np.array([X[y_train == i].mean(axis=0)
@@ -90,7 +90,7 @@ def gmm_dbscan(minPts=5, e=1300):
 
 
 if __name__ == '__main__':
-    # gmm_kmeans()
-    gmm_dbscan()
+    gmm_kmeans()
+    # gmm_dbscan()
 
 
