@@ -73,8 +73,8 @@ def dbscan(minPts):
     datas_matrix_T = datas_matrix.T
     # X = datas_matrix_T
     X = StandardScaler().fit_transform(datas_matrix_T)
-    print(len(X))
-    print(len(datas_matrix_T))
+    # print(len(X))
+    # print(len(datas_matrix_T))
     all_eps = eps(minPts)
 
     # 对于每一个k值，求得silhouette系数

@@ -16,3 +16,8 @@ SSE-DAM2018: Data Analysis and Mining Homework
 ### q3
 
 - 针对eps的取值，参考k-距离曲线图法：http://shiyanjun.cn/archives/1288.html
+
+### q4
+
+- GMM算法 介绍http://www.cnblogs.com/ooon/p/5790210.html
+
