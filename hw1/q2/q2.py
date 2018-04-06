@@ -3,6 +3,7 @@ from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from lshash.lshash import LSHash
+import datetime
 import random
 import pandas as pd
 import numpy as np
@@ -101,19 +102,27 @@ def k_means():
 
     # 对于每一个k值，求得silhouette系数
     range_silhouette_avg = []
+    end = []
     for n_cluster in range_n_clusters:
+        start = datetime.datetime.now()
+        # 这里是用于画图做准备
         fig, (ax1) = plt.subplots(1, 1)
         ax1.set_xlim([-0.1, 1])
         ax1.set_ylim([0, len(X) + (n_cluster + 1) * 10])
-        clusterer = KMeans(n_clusters=n_cluster, init='k-means++', algorithm="full")
+
+        clusterer = KMeans(n_clusters=n_cluster, init='k-means++', algorithm="elkan")
         cluster_labels = clusterer.fit_predict(X)
         # 获得silhouette分数
         silhouette_avg = silhouette_score(X, cluster_labels)
         range_silhouette_avg.append(silhouette_avg)
         print("For n_clusters =", n_cluster,
               "The average silhouette_score is :", silhouette_avg)
+        e = (datetime.datetime.now() - start).total_seconds()
+        print("Time:", e)
+        end.append(e)
 
         sample_silhouette_values = silhouette_samples(X, cluster_labels)
+        # 下面的作图参考demo
         y_lower = 10
         for i in range(n_cluster):
             ith_cluster_silhouette_values = \
@@ -158,6 +167,13 @@ def k_means():
 
         print("For k =", len(res_vipno),
               "There are", res, "in the same cluster as KMeans predicted")
+
+    # 做时间性能比较图
+    plt.bar(range_n_clusters, end, alpha=0.9, width=0.35, facecolor='lightskyblue', edgecolor='white', label='time',
+            lw=1)
+    plt.title("When use \'k-means++\' to choose init clusters")
+    plt.legend(loc="upper left")
+    plt.show()
 
     # 做Silhouette系数值-k值的函数图
     plt.plot(range_n_clusters, range_silhouette_avg, 'ro-')

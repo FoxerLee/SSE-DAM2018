@@ -112,7 +112,7 @@ def dbscan(minPts):
         print("For k =", len(res_vipno),
               "There are", res, "in the same cluster as KMeans predicted")
 
-        # 做Silhouette系数值-k值的函数图
+    # 做Silhouette系数值-k值的函数图
     plt.plot([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], range_silhouette_avg, 'ro-')
     plt.title('Silhouette-k line chart')
     plt.xlabel('eps values')

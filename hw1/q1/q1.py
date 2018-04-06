@@ -80,6 +80,7 @@ def lsh(p_hash_size, distance_funcs):
         print("knn output(from 1 to 5): {}".format(vipno_res[1:]))
         print("time:", end)
 
+    # 做时间性能比较图
     plt.bar(distance_funcs, ends, alpha=0.9, width=0.35, facecolor='lightskyblue', edgecolor='white', label='time', lw=1)
     plt.legend(loc="upper left")
     plt.show()
