@@ -2,6 +2,8 @@ from lshash.lshash import LSHash
 import pandas as pd
 import numpy as np
 import random
+import datetime
+import matplotlib.pyplot as plt
 np.set_printoptions(threshold=np.inf)
 
 
@@ -36,11 +38,11 @@ def get_data():
     return datas_set, datas_matrix
 
 
-def lsh(p_hash_size, distance_func):
+def lsh(p_hash_size, distance_funcs):
     """
     实现局部敏感哈希模拟KNN的具体函数
     :param p_hash_size: 与vipno的总数（去重后）相乘构成最终的hash_size
-    :param distance_func: 可选择的距离计算函数
+    :param distance_funcs: 可选择的距离计算函数
     :return: 去除自身之后的该vipno对应knn的输出vipno
     """
     datas_set, datas_matrix = get_data()
@@ -61,16 +63,25 @@ def lsh(p_hash_size, distance_func):
     print("hash size: {}".format(vipno_nums*p_hash_size))
     # print("distance func:", distance_func)
     print("input vipno: {}".format(datas_set.columns[random_vipno]))
-    vipno_res = []
+    # vipno_res = []
 
-    # for distance_funcs in distance_func:
-    #     vipno_res = []
-    # num_results可以限制输出的结果个数，这里取前6个，因为第一个为输入列本身
-    for res in lsh.query(datas_matrix[:, random_vipno], num_results=6, distance_func=distance_func):
-        vipno_res.append(res[0][1])
-    # print("distance func:", distance_funcs)
-    print("knn output(from 1 to 5): {}".format(vipno_res[1:]))
-    return vipno_res[1:], datas_set.columns[random_vipno]
+    ends = []
+    for distance_func in distance_funcs:
+        start = datetime.datetime.now()
+        vipno_res = []
+        # num_results可以限制输出的结果个数，这里取前6个，因为第一个为输入列本身
+        for res in lsh.query(datas_matrix[:, random_vipno], num_results=6, distance_func=distance_func):
+            vipno_res.append(res[0][1])
+        end = (datetime.datetime.now() - start).total_seconds()
+        ends.append(end)
+        print("distance func:", distance_func)
+        print("knn output(from 1 to 5): {}".format(vipno_res[1:]))
+        print("time:", end)
+
+    plt.bar(distance_funcs, ends, alpha=0.9, width=0.35, facecolor='lightskyblue', edgecolor='white', label='time', lw=1)
+    plt.legend(loc="upper left")
+    plt.show()
+    # return vipno_res[1:], datas_set.columns[random_vipno]
 
 
 if __name__ == '__main__':
@@ -79,7 +90,7 @@ if __name__ == '__main__':
     p_hash_size = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5]
     distance_func = ["euclidean", "hamming", "true_euclidean", "centred_euclidean", "cosine", "l1norm"]
 
-    lsh(p_hash_size[0], distance_func[5])
+    lsh(p_hash_size[0], distance_func)
 
 
 
