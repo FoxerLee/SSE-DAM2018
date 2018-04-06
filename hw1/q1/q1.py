@@ -34,6 +34,8 @@ def get_data():
     # 将DataFrame格式的数据转换为numpy中的array格式
     datas_matrix = datas_set.as_matrix()
     print("datas matrix`s shape:", datas_matrix.shape)
+
+    datas_set.to_csv("emm.csv")
     # print("first low:", datas_matrix[0])
     return datas_set, datas_matrix
 
