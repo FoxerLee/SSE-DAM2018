@@ -2,12 +2,15 @@ from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from lshash.lshash import LSHash
 import pandas as pd
 import numpy as np
+import random
 import math
 import matplotlib.pyplot as plt
 from q1 import q1
 np.set_printoptions(threshold=np.inf)
+
 
 def get_data():
     """
@@ -38,45 +41,87 @@ def get_data():
     return datas_set, datas_matrix
 
 
+def lsh(p_hash_size, distance_func):
+    """
+    实现局部敏感哈希模拟KNN的具体函数
+    :param p_hash_size: 与vipno的总数（去重后）相乘构成最终的hash_size
+    :param distance_funcs: 可选择的距离计算函数
+    :return: 去除自身之后的该vipno对应knn的输出vipno
+    """
+    datas_set, datas_matrix = get_data()
+    # vipno_nums 为vipno去重后的总数
+    vipno_nums = len(datas_matrix[0])
+
+    # 随机取一个vipno（这里是vipno对应的下标）
+    random_vipno = random.randint(0, vipno_nums - 1)
+
+    # 初始化lshash
+    lsh = LSHash(int(vipno_nums * p_hash_size), len(datas_matrix[:, 0]))
+    for i in range(vipno_nums):
+        # extra_data为当前列对应的vipno值，作为之后输出的时候所想要的knn的输出vipno
+        lsh.index(datas_matrix[:, i], extra_data=datas_set.columns[i])
+
+    vipno_res = []
+    # num_results可以限制输出的结果个数，这里取前6个，因为第一个为输入列本身
+    for res in lsh.query(datas_matrix[:, random_vipno], num_results=6, distance_func=distance_func):
+        vipno_res.append(res[0][1])
+
+    print("distance func:", distance_func)
+    print("knn output(from 1 to 5): {}".format(vipno_res[1:]))
+
+    return vipno_res[1:], datas_set.columns[random_vipno]
+
+
 def eps(minPts):
+    """
+    利用k-距离曲线图法，求到最好的Eps值
+    :param minPts: 自定义的minPts值
+    :return: 获取到的较好的Eps值
+    """
     datas_set, datas_matrix = get_data()
     datas_matrix_T = datas_matrix.T
 
     # print(type(datas_matrix_T[0]))
-    pca = PCA(n_components=2)
-    datas_matrix_T = pca.fit_transform(datas_matrix_T)
+    # 尝试做降维操作，但是效果不好
+    # pca = PCA(n_components=2)
+    # datas_matrix_T = pca.fit_transform(datas_matrix_T)
     res = []
+    # 计算每个点的k-距离值
     for row1 in datas_matrix_T:
         temp = []
         for row2 in datas_matrix_T:
             temp.append(np.linalg.norm(row1-row2))
         temp.sort()
         res.append(temp[minPts])
-
+    # 对所有点的k-距离集合进行升序排序
     res.sort()
 
     x_ = []
     for i in range(len(res)):
         x_.append(i)
 
-    # plt.plot(x_, res, 'ro')
-    # plt.legend()
-    # plt.show()
-
+    plt.plot(x_, res, 'ro')
+    plt.show()
     # print(res[len(res)-10:])
     return res[len(res)-10:-1]
     # return res
 
 
 def dbscan(minPts):
+    """
+    具体实现dbscan算法
+    :param minPts: 自定义的minPts值
+    :return: 无
+    """
     datas_set, datas_matrix = get_data()
-    res_vipno, random_vipno = q1.lsh(0.01, "l1norm")
+    res_vipno, random_vipno = lsh(0.01, "cosine")
 
     datas_matrix_T = datas_matrix.T
     X = datas_matrix_T
     # 尝试做降维操作
-    pca = PCA(n_components=2)
-    X = pca.fit_transform(X)
+    # pca = PCA(n_components=2)
+    # X = pca.fit_transform(X)
+
     # X = StandardScaler().fit_transform(datas_matrix_T)
     # print(len(X))
     # print(len(datas_matrix_T))
@@ -84,8 +129,8 @@ def dbscan(minPts):
 
     # 对于每一个k值，求得silhouette系数
     range_silhouette_avg = []
-    # for e in all_eps:
-    for e in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
+    for e in all_eps:
+    # for e in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
         db = DBSCAN(eps=e, min_samples=minPts).fit(X)
 
         cluster_labels = db.labels_
@@ -113,7 +158,7 @@ def dbscan(minPts):
               "There are", res, "in the same cluster as KMeans predicted")
 
     # 做Silhouette系数值-k值的函数图
-    plt.plot([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], range_silhouette_avg, 'ro-')
+    plt.plot(all_eps, range_silhouette_avg, 'ro-')
     plt.title('Silhouette-k line chart')
     plt.xlabel('eps values')
     plt.ylabel('The silhouette coefficient values')
