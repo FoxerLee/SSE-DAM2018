@@ -2,13 +2,22 @@ from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+import sklearn
+from sklearn.manifold import TSNE
 from lshash.lshash import LSHash
 import pandas as pd
 import numpy as np
 import random
 import math
 import matplotlib.pyplot as plt
-from q1 import q1
+import matplotlib.patheffects as PathEffects
+import matplotlib
+import seaborn as sns
+sns.set_style('darkgrid')
+sns.set_palette('muted')
+sns.set_context("notebook", font_scale=1.5,
+                rc={"lines.linewidth": 2.5})
+
 np.set_printoptions(threshold=np.inf)
 
 
@@ -17,7 +26,7 @@ def get_data():
     利用pandas包，从csv文件中提取所需数据，聚合后转换为矩阵格式。这里使用的函数和q1问一样
     :return: datas_set为DataFrame格式的矩阵和datas_matrix为array格式的矩阵
     """
-    datas = pd.read_csv('/Users/liyuan/Documents/数据分析与数据挖掘/SSE-DAM2018/hw1/trade.csv', usecols=['vipno', 'pluno', 'amt'])
+    datas = pd.read_csv('trade.csv', usecols=['vipno', 'pluno', 'amt'])
 
     # 利用pandas的groupby函数做聚合运算
     amts_set = datas.groupby([datas['vipno'], datas['pluno']], as_index = False).agg({'amt': sum})
@@ -147,15 +156,15 @@ def dbscan(minPts):
               "The average silhouette_score is :", silhouette_avg)
 
         res = 0
-        # pos为q1中输入的随机vipno在kmeans中的分类结果
+        # pos为q1中输入的随机vipno在dbscan中的分类结果
         pos = cluster_labels[datas_set.columns.get_loc(random_vipno)]
-        # 逐个获取q1中输出的knn对应在kmeans中的分类结果，和pos比较
+        # 逐个获取q1中输出的knn对应在dbscan中的分类结果，和pos比较
         for i in res_vipno:
             if cluster_labels[datas_set.columns.get_loc(i)] == pos:
                 res += 1
 
         print("For k =", len(res_vipno),
-              "There are", res, "in the same cluster as KMeans predicted")
+              "There are", res, "in the same cluster as DBScan predicted")
 
     # 做Silhouette系数值-k值的函数图
     plt.plot(all_eps, range_silhouette_avg, 'ro-')
@@ -166,6 +175,34 @@ def dbscan(minPts):
     plt.show()
 
 
+def t_SNE():
+    """
+    用t-SNE算法降维看看数据到底是什么鬼
+    :return:
+    """
+    RS = 20180101
+    datas_set, datas_matrix = get_data()
+    datas_matrix_T = datas_matrix.T
+    X = datas_matrix_T
+    y = np.array([0 for i in range(len(X))])
+
+    digits_proj = TSNE(random_state=RS).fit_transform(X)
+
+    palette = np.array(sns.color_palette("hls", 10))
+
+    f = plt.figure(figsize=(8, 8))
+    ax = plt.subplot(aspect='equal')
+    sc = ax.scatter(digits_proj[:, 0], digits_proj[:, 1], lw=0, s=40,
+                    c=palette[y.astype(np.int)])
+    plt.xlim(-25, 25)
+    plt.ylim(-25, 25)
+    ax.axis('off')
+    ax.axis('tight')
+    plt.show()
+
+
+
 if __name__ == '__main__':
     # eps(5)
     dbscan(5)
+    # t_SNE()
