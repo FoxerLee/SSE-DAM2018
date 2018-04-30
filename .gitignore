@@ -1,3 +1,6 @@
 *.csv
 hw1/.idea/
 hw1/q1/.idea/
+*.xml
+*.iml
+*.ipynb
