@@ -1,5 +1,6 @@
 import csv
-
+from fp_growth import find_frequent_itemsets
+import pyfpgrowth
 
 
 def merge_data():
@@ -26,13 +27,38 @@ def merge_data():
     for row in trades_new:
         merges[row[1]] = list(set([row[8]] + merges[row[1]]))
 
-    print(merges)
-    a = list(merges.items())
-    print(type(a[0]))
+    merges_list = list(merges.items())
+    # print(merges)
 
+    res = []
+
+    for l in merges_list:
+        res.append(l[1])
+
+    # with open('merges.csv', 'w') as f:
+    #     w = csv.writer(f)
+    #
+    #     for l in merges_list:
+    #         w.writerow(l[1])
+    return res
+
+
+def enaeseth_fpgrowth(minsup):
+    transactions = merge_data()
+    for itemset in find_frequent_itemsets(transactions, minsup):
+        print(itemset)
+
+
+def evandempsey_fpgrowth(minsup):
+    transactions = merge_data()
+    patterns = pyfpgrowth.find_frequent_patterns(transactions, minsup)
+    itemsets = patterns.items()
+    for itemset in itemsets:
+        print(itemset)
 
 if __name__ == '__main__':
-    merge_data()
-
+    # merge_data()
+    # enaeseth_fpgrowth(2)
+    evandempsey_fpgrowth(2)
 
 
