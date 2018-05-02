@@ -1,12 +1,16 @@
 import pandas as pd
+import numpy as np
+
+from datetime import datetime
+
 from fp_growth import find_frequent_itemsets
 import pyfpgrowth
-from datetime import datetime
+
 
 
 def merge_data(item_no):
     # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
-    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'vipno', item_no])
+    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
 
     datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
 
@@ -22,37 +26,38 @@ def merge_data(item_no):
     datas.set_index(['vipno'], inplace=True, drop=False)
 
     indexs = set(datas.index)
-    print(datas)
-    res = pd.DataFrame(index=['vipno'], columns=['sldat', 'vipno', 'pluno'])
+    # print(datas)
+    res = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', 'pluno'])
     # print(res)
     indexs = set(datas.index)
-    print(indexs)
+    # print(indexs)
     for index in indexs:
 
         miao = datas.loc[index]
-        # rows = miao.iloc[:,0].size
-        # miao = miao.iloc[:rows]
-        # if int(len(miao)*0.6) == 0:
-        #     miao = miao
-        # else:
-        # print(miao)
-
         miao = miao[:int(len(miao)*0.6)]
-        # if index == 1591015091286:
-        #     print(miao)
-        #     print(len(miao))
-        #     print(type(miao))
+
         if type(miao) == pd.core.series.Series:
             continue
-        #     print(len(miao))
-        #     a = type(miao)
-        #     print(a)
-        #     # print(miao[:int(len(miao)*0.6)])
-        # print(index)
+
         res = pd.concat([res, miao], axis=0)
+    res = res[1:][['uid', 'vipno', 'pluno']].as_matrix().tolist()
+
+    # print(type(res))
+    # print(res)
+
+    uids = list(set([r[0] for r in res]))
+    merges = dict.fromkeys(uids, [])
+    for row in res:
+        merges[row[0]] = list(set([row[2]] + merges[row[0]]))
+    merges_list = list(merges.items())
+
+    print(merges_list)
+    res = []
+    for l in merges_list:
+        res.append(l[1])
+
     print(res)
-
-
+    return res
 
 # def merge_data():
 #
