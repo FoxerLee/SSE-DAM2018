@@ -21,6 +21,8 @@ def merge_data(item_no):
 
     # 去除空值（这里主要是针对bndno）
     datas = datas[(True^datas[item_no].isin([float('nan')]))]
+    datas[[item_no]] = datas[[item_no]].astype('int')
+
     # print(datas)
     # print(datas_new)
     # print(datas_old)
@@ -50,12 +52,12 @@ def merge_data(item_no):
     # res.set_index(['uid'], inplace=True, drop=False)
     vipnos = list(set(res.index[1:]))
     merges = dict.fromkeys(vipnos, {})
-    # print(res)
+    print(res)
     for vipno in vipnos:
         tmp = res.loc[vipno]
 
         if type(tmp['sldat']) == str:
-            merges[tmp['uid']] = {tmp['sldat']: tmp[item_no]}
+            merges[tmp['vipno']] = {tmp['sldat']: tmp[item_no]}
             # print(merges[tmp['uid']])
             continue
 
@@ -71,16 +73,23 @@ def merge_data(item_no):
     # print(merges)
     merges_list = list(merges.items())
     # print(merges_list)
-
+    resfile = open("bii_" + item_no + "_out.txt", "w")
     for merge in merges_list:
         # print(type(merge))
         # print(merge)
         miao = list(merge[1].values())
-        print(miao)
-        # for m in miao:
-            # print(m)
+        # print(miao)
+        for m in miao:
+            if type(m) != int:
+                for n in m:
+                    resfile.write(str(n) + " ")
+                resfile.write(str(-1) + " ")
+            else:
+                resfile.write(str(m) + " " + str(-1) + " ")
+        resfile.write(str(-2) + "\n")
 
+    resfile.close()
 
 
 if __name__ == '__main__':
-    merge_data('pluno')
+    merge_data('bndno')
