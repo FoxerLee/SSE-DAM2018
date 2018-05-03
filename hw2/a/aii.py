@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
-import math
+
 from datetime import datetime
 
 from fp_growth import find_frequent_itemsets
 import pyfpgrowth
-
 
 
 def merge_data(item_no):
@@ -15,8 +14,7 @@ def merge_data(item_no):
     datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
 
     # 去除空值（这里主要是针对bndno）
-    datas = datas[(True^datas[item_no].isin([float('nan')]))]
-    # print(datas)
+    datas = datas[(True ^ datas[item_no].isin([float('nan')]))]
     # print(datas_new)
     # print(datas_old)
 
@@ -45,16 +43,18 @@ def merge_data(item_no):
         res = pd.concat([res, miao], axis=0)
     res = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
 
-    print(res)
+    # print(type(res))
+    # print(res)
 
-    uids = list(set([r[0] for r in res]))
+    # 这里与ai的不同在于，利用vipno作为字典的key，而不是uid
+    uids = list(set([r[1] for r in res]))
     merges = dict.fromkeys(uids, [])
     for row in res:
-        merges[row[0]] = list(set([int(row[2])] + merges[row[0]]))
+        merges[row[1]] = list(set([row[2]] + merges[row[1]]))
     merges_list = list(merges.items())
 
     # print(merges_list)
-    resfile = open("ai_"+item_no+"_out.txt", "w")
+    resfile = open("aii_"+item_no+"_out.txt", "w")
 
     res = []
     for l in merges_list:
@@ -87,8 +87,8 @@ def evandempsey_fpgrowth(minsup, item_no):
 
 
 if __name__ == '__main__':
-    merge_data('bndno')
-    # enaeseth_fpgrowth(64, "pluno")
+    # merge_data('pluno')
+    enaeseth_fpgrowth(2, "pluno")
     # evandempsey_fpgrowth(32)
 
 
