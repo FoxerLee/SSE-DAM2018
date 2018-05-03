@@ -3,6 +3,12 @@ import numpy as np
 import math
 from datetime import datetime
 
+
+import pandas as pd
+import numpy as np
+import math
+from datetime import datetime
+
 from fp_growth import find_frequent_itemsets
 import pyfpgrowth
 
@@ -28,66 +34,42 @@ def merge_data(item_no):
     # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
     datas.set_index(['vipno'], inplace=True, drop=False)
 
-    indexs = set(datas.index)
+    # indexs = set(datas.index)
     # print(datas)
     res = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
     # print(res)
     indexs = set(datas.index)
     # print(indexs)
     for index in indexs:
-
         miao = datas.loc[index]
         miao = miao[:int(len(miao)*0.6)]
-
         if type(miao) == pd.core.series.Series:
             continue
         res = pd.concat([res, miao], axis=0)
-    res = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
+    # res_list = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
+    res.set_index(['uid'], inplace=True, drop=False)
+    uids = list(set(res.index[1:]))
+    merges = dict.fromkeys(uids, {})
+    # print(res)
+    for uid in uids:
+        tmp = res.loc[uid]
 
-    print(res)
+        if type(tmp['sldat']) == str:
+            merges[tmp['uid']] = {tmp['sldat']: tmp[item_no]}
+            print(merges[tmp['uid']])
+            continue
 
-    uids = list(set([r[0] for r in res]))
-    merges = dict.fromkeys(uids, [])
-    for row in res:
-        merges[row[0]] = list(set([int(row[2])] + merges[row[0]]))
-    merges_list = list(merges.items())
+        times = list(set(tmp['sldat'].as_matrix().tolist()))
+        tmp_list = tmp.as_matrix().tolist()
+        uid_dict = dict.fromkeys(times, [])
+        for row in tmp_list:
+            uid_dict[row[1]] = list(set([int(row[0])] + uid_dict[row[1]]))
 
-    # print(merges_list)
-    resfile = open("ai_"+item_no+"_out.txt", "w")
+        print(tmp)
+        merges[uid] = uid_dict
 
-    res = []
-    for l in merges_list:
-        res.append(l[1])
-        for m in l[1]:
-            resfile.write(str(m) + " ")
-        resfile.write("\n")
-
-    resfile.close()
-    print(res)
-    return res
-
-
-def enaeseth_fpgrowth(minsup, item_no):
-    start = datetime.now()
-    transactions = merge_data(item_no)
-    for itemset in find_frequent_itemsets(transactions, minsup):
-        print(itemset)
-    print(datetime.now() - start)
-
-
-def evandempsey_fpgrowth(minsup, item_no):
-    start = datetime.now()
-    transactions = merge_data(item_no)
-    patterns = pyfpgrowth.find_frequent_patterns(transactions, minsup)
-    itemsets = patterns.items()
-    for itemset in itemsets:
-        print(itemset)
-    print(datetime.now() - start)
+    print(merges)
 
 
 if __name__ == '__main__':
-    # merge_data('bndno')
-    # enaeseth_fpgrowth(2, "pluno")
-    evandempsey_fpgrowth(2, "pluno")
-
-
+    merge_data('pluno')

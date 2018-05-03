@@ -24,6 +24,7 @@ def merge_data(item_no):
 
     datas.set_index(['vipno', 'sldat'], inplace=True, drop=False)
     datas.sort_index(inplace=True)
+    # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
     datas.set_index(['vipno'], inplace=True, drop=False)
 
     indexs = set(datas.index)
@@ -47,8 +48,8 @@ def merge_data(item_no):
     # print(res)
 
     # 这里与ai的不同在于，利用vipno作为字典的key，而不是uid
-    uids = list(set([r[1] for r in res]))
-    merges = dict.fromkeys(uids, [])
+    vipnos = list(set([r[1] for r in res]))
+    merges = dict.fromkeys(vipnos, [])
     for row in res:
         merges[row[1]] = list(set([row[2]] + merges[row[1]]))
     merges_list = list(merges.items())
