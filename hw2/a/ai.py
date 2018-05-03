@@ -15,6 +15,7 @@ def merge_data(item_no):
 
     # 去除空值（这里主要是针对bndno）
     datas = datas[(True^datas[item_no].isin([float('nan')]))]
+    datas[[item_no]] = datas[[item_no]].astype('int')
     # print(datas)
     # print(datas_new)
     # print(datas_old)

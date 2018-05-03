@@ -20,7 +20,8 @@ def merge_data(item_no):
     datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
 
     # 去除空值（这里主要是针对bndno）
-    datas = datas[(True^datas[item_no].isin([float('nan')]))]
+    datas = datas[(True ^ datas[item_no].isin([float('nan')]))]
+    datas[[item_no]] = datas[[item_no]].astype('int')
     # print(datas)
     # print(datas_new)
     # print(datas_old)
@@ -34,41 +35,41 @@ def merge_data(item_no):
     # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
     datas.set_index(['vipno'], inplace=True, drop=False)
 
-    # indexs = set(datas.index)
+    indexs = set(datas.index)
     # print(datas)
     res = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
     # print(res)
     indexs = set(datas.index)
     # print(indexs)
     for index in indexs:
+
         miao = datas.loc[index]
-        miao = miao[:int(len(miao)*0.6)]
+        miao = miao[:int(len(miao) * 0.6)]
+
         if type(miao) == pd.core.series.Series:
             continue
         res = pd.concat([res, miao], axis=0)
-    # res_list = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
-    res.set_index(['uid'], inplace=True, drop=False)
-    uids = list(set(res.index[1:]))
-    merges = dict.fromkeys(uids, {})
-    # print(res)
-    for uid in uids:
-        tmp = res.loc[uid]
+    res = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
 
-        if type(tmp['sldat']) == str:
-            merges[tmp['uid']] = {tmp['sldat']: tmp[item_no]}
-            print(merges[tmp['uid']])
-            continue
+    print(res)
 
-        times = list(set(tmp['sldat'].as_matrix().tolist()))
-        tmp_list = tmp.as_matrix().tolist()
-        uid_dict = dict.fromkeys(times, [])
-        for row in tmp_list:
-            uid_dict[row[1]] = list(set([int(row[0])] + uid_dict[row[1]]))
+    uids = list(set([r[0] for r in res]))
+    merges = dict.fromkeys(uids, [])
+    for row in res:
+        merges[row[0]] = list(set([int(row[2])] + merges[row[0]]))
+    merges_list = list(merges.items())
 
-        print(tmp)
-        merges[uid] = uid_dict
+    # print(merges_list)
+    resfile = open("ai_" + item_no + "_out.txt", "w")
 
-    print(merges)
+    res = []
+    for l in merges_list:
+        res.append(l[1])
+        for m in l[1]:
+            resfile.write(str(m) + " ")
+        resfile.write("-1 -2\n")
+
+    resfile.close()
 
 
 if __name__ == '__main__':
