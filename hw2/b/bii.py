@@ -4,15 +4,6 @@ import math
 from datetime import datetime
 
 
-import pandas as pd
-import numpy as np
-import math
-from datetime import datetime
-
-from fp_growth import find_frequent_itemsets
-import pyfpgrowth
-
-
 def merge_data(item_no):
     # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
     datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
@@ -21,23 +12,14 @@ def merge_data(item_no):
 
     # 去除空值（这里主要是针对bndno）
     datas = datas[(True^datas[item_no].isin([float('nan')]))]
+    # 将item_no字段的格式转换为int，方便之后处理
     datas[[item_no]] = datas[[item_no]].astype('int')
-
-    # print(datas)
-    # print(datas_new)
-    # print(datas_old)
-
-    # datas = pd.concat([datas_old, datas_new], axis=0)
-    # print(datas.loc['1591015091286'])
-    # print(datas)
-
+    # 设置2级索引，进行排序
     datas.set_index(['vipno', 'sldat'], inplace=True, drop=False)
     datas.sort_index(inplace=True)
     # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
     datas.set_index(['vipno'], inplace=True, drop=False)
 
-    # indexs = set(datas.index)
-    # print(datas)
     res = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
     # print(res)
     indexs = set(datas.index)
@@ -48,48 +30,54 @@ def merge_data(item_no):
         if type(miao) == pd.core.series.Series:
             continue
         res = pd.concat([res, miao], axis=0)
+    # 这里与aii不同的在于，需要考虑时间序列，所以不能舍弃'sldat'字段
     # res_list = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
     # res.set_index(['uid'], inplace=True, drop=False)
     vipnos = list(set(res.index[1:]))
+    # 这里使用两层字典，外层字典的key为vipno，value为一个字典 -- 其key为sldat，value为相同sldat的item_no集合
     merges = dict.fromkeys(vipnos, {})
-    print(res)
+    # print(res)
     for vipno in vipnos:
+        # 取出某一个vipno的所有记录
         tmp = res.loc[vipno]
-
+        # 该vipno只有一行数据，单独处理（因为后面不能转array）
         if type(tmp['sldat']) == str:
             merges[tmp['vipno']] = {tmp['sldat']: tmp[item_no]}
             # print(merges[tmp['uid']])
             continue
-
+        # 获取该vipno购买记录的所有sldat，即时间
         times = list(set(tmp['sldat'].as_matrix().tolist()))
         tmp_list = tmp.as_matrix().tolist()
+        # 这里操作就和之前问类似了
         uid_dict = dict.fromkeys(times, [])
         for row in tmp_list:
-            uid_dict[row[1]] = list(set([int(row[0])] + uid_dict[row[1]]))
+            uid_dict[row[1]] = list([int(row[0])] + uid_dict[row[1]])
 
-        # print(tmp)
         merges[vipno] = uid_dict
 
     # print(merges)
     merges_list = list(merges.items())
     # print(merges_list)
-    resfile = open("bii_" + item_no + "_out.txt", "w")
+    resfile = open("input/bii_" + item_no + ".txt", "w")
     for merge in merges_list:
-        # print(type(merge))
-        # print(merge)
+
         miao = list(merge[1].values())
         # print(miao)
         for m in miao:
+            # 判断是不是只有一个值
             if type(m) != int:
                 for n in m:
                     resfile.write(str(n) + " ")
+                # 加入间隔符 -1
                 resfile.write(str(-1) + " ")
             else:
+                # 只有一行的
                 resfile.write(str(m) + " " + str(-1) + " ")
+        # 换行符 -2
         resfile.write(str(-2) + "\n")
 
     resfile.close()
 
 
 if __name__ == '__main__':
-    merge_data('bndno')
+    merge_data('dptno')
