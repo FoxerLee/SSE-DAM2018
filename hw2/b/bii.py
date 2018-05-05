@@ -4,42 +4,17 @@ import math
 from datetime import datetime
 
 
-def merge_data(item_no):
-    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
-    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
-
-    datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
-
-    # 去除空值（这里主要是针对bndno）
-    datas = datas[(True^datas[item_no].isin([float('nan')]))]
-    # 将item_no字段的格式转换为int，方便之后处理
-    datas[[item_no]] = datas[[item_no]].astype('int')
-    # 设置2级索引，进行排序
-    datas.set_index(['vipno', 'sldat'], inplace=True, drop=False)
-    datas.sort_index(inplace=True)
-    # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
-    datas.set_index(['vipno'], inplace=True, drop=False)
-
-    res = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
-    # print(res)
-    indexs = set(datas.index)
-    # print(indexs)
-    for index in indexs:
-        miao = datas.loc[index]
-        miao = miao[:int(len(miao)*0.6)]
-        if type(miao) == pd.core.series.Series:
-            continue
-        res = pd.concat([res, miao], axis=0)
+def combine(datas):
     # 这里与aii不同的在于，需要考虑时间序列，所以不能舍弃'sldat'字段
     # res_list = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
     # res.set_index(['uid'], inplace=True, drop=False)
-    vipnos = list(set(res.index[1:]))
+    vipnos = list(set(datas.index[1:]))
     # 这里使用两层字典，外层字典的key为vipno，value为一个字典 -- 其key为sldat，value为相同sldat的item_no集合
     merges = dict.fromkeys(vipnos, {})
     # print(res)
     for vipno in vipnos:
         # 取出某一个vipno的所有记录
-        tmp = res.loc[vipno]
+        tmp = datas.loc[vipno]
         # 该vipno只有一行数据，单独处理（因为后面不能转array）
         if type(tmp['sldat']) == str:
             merges[tmp['vipno']] = {tmp['sldat']: tmp[item_no]}
@@ -57,9 +32,12 @@ def merge_data(item_no):
 
     # print(merges)
     merges_list = list(merges.items())
-    # print(merges_list)
-    resfile = open("input/bii_" + item_no + ".txt", "w")
-    for merge in merges_list:
+    return merges_list
+
+
+def write_data(path, datas):
+    resfile = open(path, "w")
+    for merge in datas:
 
         miao = list(merge[1].values())
         # print(miao)
@@ -77,6 +55,43 @@ def merge_data(item_no):
         resfile.write(str(-2) + "\n")
 
     resfile.close()
+
+
+def merge_data(item_no):
+    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
+    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
+
+    datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
+
+    # 去除空值（这里主要是针对bndno）
+    datas = datas[(True^datas[item_no].isin([float('nan')]))]
+    # 将item_no字段的格式转换为int，方便之后处理
+    datas[[item_no]] = datas[[item_no]].astype('int')
+    # 设置2级索引，进行排序
+    datas.set_index(['vipno', 'sldat'], inplace=True, drop=False)
+    datas.sort_index(inplace=True)
+    # 在完成排序后重新设置为一级索引，但不排序，这样能够加快性能
+    datas.set_index(['vipno'], inplace=True, drop=False)
+
+    X = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
+    y = pd.DataFrame(index=['vipno'], columns=['sldat', 'uid', 'vipno', item_no])
+    indexs = set(datas.index)
+    # print(indexs)
+    for index in indexs:
+        miao = datas.loc[index]
+        train = miao[:int(len(miao) * 0.6)]
+        test = miao[int(len(miao) * 0.6):]
+        if type(miao) == pd.core.series.Series:
+            continue
+        X = pd.concat([X, train], axis=0)
+        y = pd.concat([y, test], axis=0)
+
+    X_list = combine(X)
+    y_list = combine(y)
+    # print(merges_list)
+
+    write_data("input/bii_" + item_no + "_train.txt", X_list)
+    write_data("input/bii_" + item_no + "_test.txt", y_list)
 
 
 if __name__ == '__main__':
