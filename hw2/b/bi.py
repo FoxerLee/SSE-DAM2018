@@ -23,7 +23,7 @@ def write_data(path, datas):
         res.append(l[1])
         for m in l[1]:
             resfile.write(str(m) + " ")
-        resfile.write("\n")
+
         # 这个是SPMF中的算法所要求的输入格式
         resfile.write("-1 -2\n")
 
@@ -32,7 +32,8 @@ def write_data(path, datas):
 
 
 def merge_data(item_no):
-    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
+    start = datetime.now()
+    # datas = pd.read_csv('../trade.csv', usecols=['sldat', 'uid', 'vipno', item_no])
     datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
 
     datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
@@ -70,7 +71,9 @@ def merge_data(item_no):
 
     X_res = write_data("input/bi_" + item_no + "_train.txt", X_list)
     y_res = write_data("input/bi_" + item_no + "_test.txt", y_list)
-
+    print("For " + item_no + " time: {}".format(datetime.now() - start))
 
 if __name__ == '__main__':
-    merge_data('bndno')
+    item_no = ['pluno', 'dptno', 'bndno']
+    for i in item_no:
+        merge_data(i)

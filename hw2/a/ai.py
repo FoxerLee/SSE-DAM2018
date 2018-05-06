@@ -34,10 +34,10 @@ def write_data(path, datas):
 
 def merge_data(item_no):
     start = datetime.now()
-    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
-    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
+    datas = pd.read_csv('../trade.csv', usecols=['sldat', 'uid', 'vipno', item_no])
+    # datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
     # 修改一下名字
-    datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
+    # datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
 
     # 去除空值（这里主要是针对bndno）
     datas = datas[(True^datas[item_no].isin([float('nan')]))]

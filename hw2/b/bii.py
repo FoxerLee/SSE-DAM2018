@@ -4,7 +4,7 @@ import math
 from datetime import datetime
 
 
-def combine(datas):
+def combine(datas, item_no):
     # 这里与aii不同的在于，需要考虑时间序列，所以不能舍弃'sldat'字段
     # res_list = res[1:][['uid', 'vipno', item_no]].as_matrix().tolist()
     # res.set_index(['uid'], inplace=True, drop=False)
@@ -15,18 +15,22 @@ def combine(datas):
     for vipno in vipnos:
         # 取出某一个vipno的所有记录
         tmp = datas.loc[vipno]
+        # print(tmp)
         # 该vipno只有一行数据，单独处理（因为后面不能转array）
         if type(tmp['sldat']) == str:
+            # print(tmp[item_no])
             merges[tmp['vipno']] = {tmp['sldat']: tmp[item_no]}
             # print(merges[tmp['uid']])
+            # print(merges[tmp['vipno']])
             continue
         # 获取该vipno购买记录的所有sldat，即时间
         times = list(set(tmp['sldat'].as_matrix().tolist()))
         tmp_list = tmp.as_matrix().tolist()
+        # print(tmp_list)
         # 这里操作就和之前问类似了
         uid_dict = dict.fromkeys(times, [])
         for row in tmp_list:
-            uid_dict[row[1]] = list([int(row[0])] + uid_dict[row[1]])
+            uid_dict[row[1]] = list(set([int(row[0])] + uid_dict[row[1]]))
 
         merges[vipno] = uid_dict
 
@@ -58,10 +62,11 @@ def write_data(path, datas):
 
 
 def merge_data(item_no):
-    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
-    datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
+    start = datetime.now()
+    datas = pd.read_csv('../trade.csv', usecols=['sldat', 'uid', 'vipno', item_no])
+    # datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
 
-    datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
+    # datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
 
     # 去除空值（这里主要是针对bndno）
     datas = datas[(True^datas[item_no].isin([float('nan')]))]
@@ -86,13 +91,16 @@ def merge_data(item_no):
         X = pd.concat([X, train], axis=0)
         y = pd.concat([y, test], axis=0)
 
-    X_list = combine(X)
-    y_list = combine(y)
+    X_list = combine(X, item_no)
+    y_list = combine(y, item_no)
     # print(merges_list)
 
     write_data("input/bii_" + item_no + "_train.txt", X_list)
     write_data("input/bii_" + item_no + "_test.txt", y_list)
+    print("For " + item_no + " time: {}".format(datetime.now() - start))
 
 
 if __name__ == '__main__':
-    merge_data('dptno')
+    item_no = ['pluno', 'dptno', 'bndno']
+    for i in item_no:
+        merge_data(i)

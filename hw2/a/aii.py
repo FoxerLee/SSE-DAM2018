@@ -32,7 +32,7 @@ def write_data(path, datas):
 
 def merge_data(item_no):
     start = datetime.now()
-    # datas_old = pd.read_csv('../trade.csv', usecols=['sldat', 'vipno', item_no])
+    # datas = pd.read_csv('../trade.csv', usecols=['sldat', 'uid', 'vipno', item_no])
     datas = pd.read_csv('../trade_new.csv', usecols=['sldatime', 'uid', 'vipno', item_no])
 
     datas.rename(columns={'sldatime': 'sldat'}, inplace=True)
