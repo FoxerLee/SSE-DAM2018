@@ -18,6 +18,12 @@ def read_data(path):
 
 
 def confidence(purchases, candidate_rules):
+    """
+    计算关联规则的置信度
+    :param purchases:
+    :param candidate_rules:
+    :return:
+    """
     correct_counts = collections.defaultdict(int)
     incorrect_counts = collections.defaultdict(int)
     for purchase in purchases:
@@ -44,7 +50,7 @@ def confidence(purchases, candidate_rules):
 
 
 def main():
-    f = open('miao.txt', 'r')
+    f = open('../miao.txt', 'r')
     datas = f.readlines()
     # print(datas)
     frequent_itemsets = []
@@ -67,20 +73,25 @@ def main():
 
     # print(candidate_rules)
 
-    purchases = read_data('../a/input/aii_pluno.txt')
+    purchases = read_data('../a/input/aii_bndno_train.txt')
 
     # print(purchases)
     # print(candidate_rules)
     rule_confidence = confidence(purchases, candidate_rules)
     print(rule_confidence)
-    sorted_confidence = sorted(rule_confidence.items(), key=itemgetter(1), reverse=True)[:5]
+    sorted_confidence = sorted(rule_confidence.items(), key=itemgetter(1), reverse=True)[:10]
     # print(sorted_confidence)
-
+    print("Top 10 confidence:")
+    for s in sorted_confidence:
+        print(s)
     rule_confidence = [s[0] for s in sorted_confidence]
-    test_data = read_data('../a/input/aii_pluno_test.txt')
+    test_data = read_data('../a/input/aii_bndno_test.txt')
 
     res = confidence(test_data, rule_confidence)
-    print(res)
+    res = sorted(res.items(), key=itemgetter(1), reverse=True)
+    print("Test result:")
+    for r in res:
+        print(r)
 
 
 if __name__ == '__main__':
