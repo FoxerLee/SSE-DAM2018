@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+from pandas.core.frame import DataFrame
 
 # def read_data(path):
 #     datas = pd.read_csv(path)
@@ -9,6 +10,10 @@ import math
 
 
 def gongcan_to_ll():
+    """
+    将原始数据中的RNCID和CellID转换为gongcan表里的经纬度
+    :return:
+    """
     data_2g = pd.read_csv('./data/data_2g.csv')
     gongcan = pd.read_csv('./data/2g_gongcan.csv')
 
@@ -34,7 +39,10 @@ def gongcan_to_ll():
     IDs_index = [[5, 6], [10, 11], [15, 16], [20, 21], [25, 26], [30, 31], [35, 36]]
 
     except_ID = set()
+    # data_lls = []
     for row in data_2g_list:
+        # ll = [row[0]]
+        # print(row)
         for i in IDs_index:
             # 将空值附为 0 和 -1
             if math.isnan(row[i[0]]):
@@ -44,20 +52,44 @@ def gongcan_to_ll():
             # print(row[i[1]])
             ID = str(int(row[i[0]])) + '-' + str(int(row[i[1]]))
             # print(ID)
+
             if ID in gongcan_dict.keys():
-                ll = gongcan_dict[ID]
+                row.append(gongcan_dict[ID][0])
+                row.append(gongcan_dict[ID][1])
+                # print(ll)
             else:
-                except_ID.add(ID)
+                row.append(0)
+                row.append(-1)
+                # except_ID.add(ID)
+        # data_lls.append(ll)
+    indexs = data_2g.columns.values.tolist()
+    for i in range(1, 8):
+        indexs.append('Latitude_' + str(i))
+        indexs.append('Longitude_' + str(i))
+        # print("miao")
+    # print(indexs)
+    # print(data_2g_list[0])
+    new_data_2g = DataFrame(data_2g_list)
+    new_data_2g.columns = indexs
 
-    print(except_ID)
-    print(len(except_ID))
+    print(new_data_2g)
+    # print(except_ID)
+    # print(len(except_ID))
+    return new_data_2g
 
 
-# def ll_to_grid():
+def ll_to_grid(ll_data_2g):
+    """
+
+    :param ll_data_2g:
+    :return:
+    """
+
 
 
 def main():
-    gongcan_to_ll()
+    ll_data_2g = gongcan_to_ll()
+    ll_to_grid(ll_data_2g)
 
 
 if __name__ == '__main__':
