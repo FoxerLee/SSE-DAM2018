@@ -1,7 +1,26 @@
 import pandas as pd
+import numpy as np
 import math
+
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn import datasets
+
+# 左下角坐标
+lb_Longitude = 121.20120490000001
+lb_Latitude = 31.28175691
+# 右上角坐标
+rt_Longitude = 121.2183295
+rt_Latitude = 31.29339344
+# 格子个数是 82*65
+y_box_num = 65
+X_box_num = 82
+# 每一个格子所占的经纬度
+per_lon = (rt_Longitude - lb_Longitude)/X_box_num
+per_lat = (rt_Latitude - lb_Latitude)/y_box_num
 
 
 def haversine(lon1, lat1, lon2, lat2):  # 经度1，纬度1，经度2，纬度2 （十进制度数）
@@ -20,6 +39,79 @@ def haversine(lon1, lat1, lon2, lat2):  # 经度1，纬度1，经度2，纬度2 
     c = 2 * asin(sqrt(a))
     r = 6371  # 地球平均半径，单位为公里
     return c * r * 1000
+
+
+def precision_recall(y_true, y_pred):
+    """
+    计算precision（对于所有的grid和每一个grid）和recall（对于每一个grid）
+    :param y_true:
+    :param y_pred:
+    :return:
+    """
+    result = classification_report(y_true, y_pred)
+    sort_d = pd.value_counts(y_true)
+    top10 = sort_d.iloc[0:10].index.tolist()
+    # print(top10)
+
+    overall_pre = result.split('\n')[-2].split('      ')[1]
+    print(overall_pre)
+
+    res = result.split('\n')
+    # res = res[:-1]
+    top10_pre = []
+    top10_recall = []
+    for r in res:
+        r = r.lstrip().split('      ')
+        # print(type(r[0]))
+        # print(type(top10[0]))
+        try:
+            if float(r[0]) in top10:
+                top10_pre.append([r[0], r[1]])
+                top10_recall.append([r[0], r[2]])
+                # print(r[0])
+                # print(r[1])
+                # print("=====")
+        except:
+            continue
+    print(top10_pre)
+    print(top10_recall)
+    print("=========")
+
+    # for i in top10:
+    # f = open('result.txt', 'w')
+    # f.write(result)
+    # f.close()
+
+
+def pos_error(y_true, y_pred):
+    """
+    计算位置误差
+    :param y_true:
+    :param y_pred:
+    :return:
+    """
+    ll_pred = []
+    for y in y_pred:
+        # lon = lb_Longitude + (y % X_box_num) * ()
+        # lat = lb_Latitude +
+        X_box = int(y % X_box_num)
+        y_box = int(y / X_box_num) + 1
+        if X_box == 0:
+            X_box = X_box_num
+            y_box -= 1
+        lon = lb_Longitude + per_lon * X_box
+        lat = lb_Latitude + per_lat * y_box
+
+        ll_pred.append([lon, lat])
+    ll_true = np.delete(y_true, 0, axis=1).tolist()
+    # print(ll_true)
+    # print(ll_pred)
+    errors = []
+    for (true, pred) in zip(ll_true, ll_pred):
+        error = haversine(true[0], true[1], pred[0], pred[1])
+        errors.append(error)
+    return errors.sort()
+    # print(errors[int(len(errors)/2)])
 
 
 def gongcan_to_ll():
@@ -97,17 +189,11 @@ def ll_to_grid(ll_data_2g):
     :param ll_data_2g:
     :return:
     """
-    # 左下角坐标
-    lb_Longitude = 121.20120490000001
-    lb_Latitude = 31.28175691
-    # 右上角坐标
-    rt_Longitude = 121.2183295
-    rt_Latitude = 31.29339344
 
-    y_box_num = int((haversine(lb_Longitude, lb_Latitude, lb_Longitude, rt_Latitude))/20) + 1
-    X_box_num = int((haversine(lb_Longitude, lb_Latitude, rt_Longitude, lb_Latitude))/20) + 1
-    # print(X_box_num/20)
-    # print(y_box_num/20)
+    # y_box_num = int((haversine(lb_Longitude, lb_Latitude, lb_Longitude, rt_Latitude))/20) + 1
+    # X_box_num = int((haversine(lb_Longitude, lb_Latitude, rt_Longitude, lb_Latitude))/20) + 1
+    # print(X_box_num)
+    # print(y_box_num)
     # print(ll_data_2g)
     ll_data_2g_list = ll_data_2g.as_matrix().tolist()
     for row in ll_data_2g_list:
@@ -124,7 +210,7 @@ def ll_to_grid(ll_data_2g):
         if X_length % 20 != 0:
             X += 1
 
-        grid_num = X + y * y_box_num
+        grid_num = X + (y-1) * X_box_num
         row.append(grid_num)
 
     indexs = ll_data_2g.columns.values.tolist()
@@ -132,7 +218,7 @@ def ll_to_grid(ll_data_2g):
     train_data = DataFrame(ll_data_2g_list)
     train_data.columns = indexs
 
-    print(train_data)
+    # print(train_data)
 
     return train_data
 
@@ -141,7 +227,38 @@ def main():
     ll_data_2g = gongcan_to_ll()
     train_data = ll_to_grid(ll_data_2g)
 
+    # print(train_data)
+    # 删除原有的ID，不作为训练特征
+    for i in range(1, 8):
+        train_data.drop(['RNCID_'+str(i)], axis=1, inplace=True)
+        train_data.drop(['CellID_'+str(i)], axis=1, inplace=True)
+    # 将空余的信号强度，用0补填补
+    train_data = train_data.fillna(0)
+
+    # features和labels
+    X = train_data.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
+                         'Num_connected', 'grid_num'], axis=1, inplace=False).as_matrix()
+    y = train_data[['grid_num', 'Longitude', 'Latitude']].as_matrix()
+
+    # 切分训练集和验证集
+    # random_state不设置，每次的随机结果都会不一样
+    for i in range(10):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+        # 高斯朴素贝叶斯分类器
+        gnb = GaussianNB()
+        y_pred = gnb.fit(X_train, y_train[:,0]).predict(X_test)
+        precision_recall(y_test[:,0], y_pred)
+        pos_error(y_test, y_pred)
+
+    # print(y)
+    # X.to_csv('X.csv')
+    # train_data.to_csv("train_data.csv")
+
 
 if __name__ == '__main__':
-    # main()
+    main()
     # read_data('./data/data_2g.csv')
+    # iris = datasets.load_iris()
+    # print(iris.data)
+    # print(type(iris.data))
