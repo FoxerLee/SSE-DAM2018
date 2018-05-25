@@ -5,6 +5,8 @@ import math
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn import datasets
@@ -81,6 +83,7 @@ def precision_recall(y_true, y_pred):
     # f = open('result.txt', 'w')
     # f.write(result)
     # f.close()
+    return overall_pre, top10_pre, top10_recall
 
 
 def pos_error(y_true, y_pred):
@@ -219,7 +222,6 @@ def ll_to_grid(ll_data_2g):
     train_data.columns = indexs
 
     # print(train_data)
-
     return train_data
 
 
@@ -239,19 +241,43 @@ def main():
     X = train_data.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                          'Num_connected', 'grid_num'], axis=1, inplace=False).as_matrix()
     y = train_data[['grid_num', 'Longitude', 'Latitude']].as_matrix()
-
-    # 切分训练集和验证集
-    # random_state不设置，每次的随机结果都会不一样
+    # 高斯朴素贝叶斯分类器
     for i in range(10):
+        # 切分训练集和验证集
+        # random_state不设置，每次的随机结果都会不一样
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-        # 高斯朴素贝叶斯分类器
         gnb = GaussianNB()
         y_pred = gnb.fit(X_train, y_train[:,0]).predict(X_test)
-        precision_recall(y_test[:,0], y_pred)
+        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:,0], y_pred)
         pos_error(y_test, y_pred)
 
-    # print(y)
+    # K近邻分类器
+    for i in range(10):
+        # 切分训练集和验证集
+        # random_state不设置，每次的随机结果都会不一样
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+        neigh = KNeighborsClassifier(n_neighbors=3)
+        y_pred = neigh.fit(X_train, y_train[:,0]).predict(X_test)
+        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:, 0], y_pred)
+        pos_error(y_test, y_pred)
+
+    # 决策树分类器
+    for i in range(10):
+        # 切分训练集和验证集
+        # random_state不设置，每次的随机结果都会不一样
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+        clf = DecisionTreeClassifier()
+        y_pred = clf.fit(X_train, y_train[:, 0]).predict(X_test)
+        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:, 0], y_pred)
+        pos_error(y_test, y_pred)
+
+
+
+
+        # print(y)
     # X.to_csv('X.csv')
     # train_data.to_csv("train_data.csv")
 
