@@ -1,15 +1,11 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn import datasets
 
 # 左下角坐标
 lb_Longitude = 121.20120490000001
@@ -113,7 +109,8 @@ def pos_error(y_true, y_pred):
     for (true, pred) in zip(ll_true, ll_pred):
         error = haversine(true[0], true[1], pred[0], pred[1])
         errors.append(error)
-    return errors.sort()
+    errors.sort()
+    return errors
     # print(errors[int(len(errors)/2)])
 
 
@@ -122,8 +119,8 @@ def gongcan_to_ll():
     将原始数据中的RNCID和CellID转换为gongcan表里的经纬度
     :return:
     """
-    data_2g = pd.read_csv('./data/data_2g.csv')
-    gongcan = pd.read_csv('./data/2g_gongcan.csv')
+    data_2g = pd.read_csv('../data_2g.csv')
+    gongcan = pd.read_csv('../2g_gongcan.csv')
 
     # 将RNCID和CellID合并为一个字段，用"-"隔开，之后好用来比较
     gongcan["IDs"] = gongcan[['RNCID', 'CellID']].apply(lambda x: '-'.join(str(value) for value in x), axis=1)
@@ -225,66 +222,20 @@ def ll_to_grid(ll_data_2g):
     return train_data
 
 
-def main():
-    ll_data_2g = gongcan_to_ll()
-    train_data = ll_to_grid(ll_data_2g)
+def cdf_figure(errors_all):
+    plt.figure('Comparision 2G DATA')
+    # ax = plt.gca()
+    plt.xlabel('CDF')
+    plt.ylabel('Error(meters)')
+    X_list = []
+    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    for i in range(1220):
+        X_list.append((float(i)/1220.0))
 
-    # print(train_data)
-    # 删除原有的ID，不作为训练特征
-    for i in range(1, 8):
-        train_data.drop(['RNCID_'+str(i)], axis=1, inplace=True)
-        train_data.drop(['CellID_'+str(i)], axis=1, inplace=True)
-    # 将空余的信号强度，用0补填补
-    train_data = train_data.fillna(0)
-
-    # features和labels
-    X = train_data.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
-                         'Num_connected', 'grid_num'], axis=1, inplace=False).as_matrix()
-    y = train_data[['grid_num', 'Longitude', 'Latitude']].as_matrix()
-    # 高斯朴素贝叶斯分类器
-    for i in range(10):
-        # 切分训练集和验证集
-        # random_state不设置，每次的随机结果都会不一样
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-        gnb = GaussianNB()
-        y_pred = gnb.fit(X_train, y_train[:,0]).predict(X_test)
-        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:,0], y_pred)
-        pos_error(y_test, y_pred)
-
-    # K近邻分类器
-    for i in range(10):
-        # 切分训练集和验证集
-        # random_state不设置，每次的随机结果都会不一样
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-        neigh = KNeighborsClassifier(n_neighbors=3)
-        y_pred = neigh.fit(X_train, y_train[:,0]).predict(X_test)
-        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:, 0], y_pred)
-        pos_error(y_test, y_pred)
-
-    # 决策树分类器
-    for i in range(10):
-        # 切分训练集和验证集
-        # random_state不设置，每次的随机结果都会不一样
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-        clf = DecisionTreeClassifier()
-        y_pred = clf.fit(X_train, y_train[:, 0]).predict(X_test)
-        overall_pre, top10_pre, top10_recall = precision_recall(y_test[:, 0], y_pred)
-        pos_error(y_test, y_pred)
-
-
-
-
-        # print(y)
-    # X.to_csv('X.csv')
-    # train_data.to_csv("train_data.csv")
-
-
-if __name__ == '__main__':
-    main()
-    # read_data('./data/data_2g.csv')
-    # iris = datasets.load_iris()
-    # print(iris.data)
-    # print(type(iris.data))
+    for i in range(len(errors_all)):
+        errors = np.array(errors_all[i])
+        mean_errors = errors.mean(axis=0)
+        # print(mean_errors)
+        plt.plot(X_list, list(mean_errors), linewidth=1, alpha=0.6, label=labels[i])
+    plt.legend()
+    plt.show()
