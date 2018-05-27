@@ -38,7 +38,8 @@ def main():
     ids = list(set(train_data.index.tolist()))
     # print(ids)
 
-    errors_all = []
+    # errors_all = []
+    median_errors = []
     for id in ids:
         MS_datas = train_data.loc[id]
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
@@ -63,12 +64,59 @@ def main():
 
             # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
             # errors.append(utils.pos_error(y_test, y_pred))
-
-        print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-        errors_all.append([id, errors])
+        median_error = np.percentile(np.array(errors).mean(axis=0), 50)
+        print("Median error: {}".format(median_error))
+        median_errors.append([id, median_error])
+        # errors_all.append([id, errors])
         print("****************************")
+    median_errors = DataFrame(median_errors, columns=['id', 'median_error'])
+    median_errors.set_index(['median_error'], inplace=True, drop=False)
+    median_errors.sort_index(inplace=True)
+    print(median_errors)
+
+    MS_number = median_errors.shape[0]
+    topk_best = median_errors.iloc[:int(MS_number*0.2)]['id'].as_matrix().tolist()
+    topk_worst = median_errors.iloc[int(MS_number*0.8):]['id'].as_matrix().tolist()
+
+    # print(topk_best)
+    # print(topk_worst)
+    best_data = DataFrame()
+    for best in topk_best:
+        best_data = pd.concat([best_data, train_data.loc[best]], axis=0)
+    # print(best_data)
+
+    for worst in topk_worst:
+        MS_datas = pd.concat([train_data.loc[worst], best_data])
+        X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
+                           'Num_connected'], axis=1, inplace=False).as_matrix()
+        y = MS_datas[
+            ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
+
+        # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
+        random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+        # 随机森林
+        print("MS {}".format(worst))
+        errors = []
+        for i in range(10):
+            # 切分训练集和验证集
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+            regr = RandomForestRegressor(max_depth=20, random_state=0)
+            y_pred = regr.fit(X_train, np.delete(y_train, [2, 3, 4, 5], axis=1)).predict(X_test)
+            error = utils.pos_error(y_test, y_pred)
+            errors.append(error)
+
+            # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+            # errors.append(utils.pos_error(y_test, y_pred))
+        median_error = np.percentile(np.array(errors).mean(axis=0), 50)
+        print("Median error: {}".format(median_error))
+        # median_errors.append([worst, median_error])
+        # errors_all.append([id, errors])
+        print("****************************")
+
     # utils.cdf_figure_each(errors_all)
-    utils.cdf_figure_overall(errors_all)
+    # utils.cdf_figure_overall(errors_all)
 
 
 if __name__ == '__main__':
