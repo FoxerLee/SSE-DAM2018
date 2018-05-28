@@ -58,6 +58,7 @@ def main():
 
             regr = RandomForestRegressor(max_depth=20, random_state=0)
             y_pred = regr.fit(X_train, np.delete(y_train, [2, 3, 4, 5], axis=1)).predict(X_test)
+
             error = utils.pos_error(y_test, y_pred)
             errors.append(error)
 
@@ -67,7 +68,7 @@ def main():
         print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
         errors_all.append([id, errors])
         print("****************************")
-    # utils.cdf_figure_each(errors_all)
+    utils.cdf_figure_each(errors_all)
     utils.cdf_figure_overall(errors_all)
 
 
