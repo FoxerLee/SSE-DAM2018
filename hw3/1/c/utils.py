@@ -124,7 +124,7 @@ def cdf_figure_each(errors_all):
         # print(mean_errors)
         plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))],
                  list(mean_errors), linewidth=1, alpha=0.6)
-    plt.legend()
+    # plt.legend()
     plt.show()
 
 
@@ -145,5 +145,5 @@ def cdf_figure_overall(errors_all):
     mean_errors.sort()
     plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
              list(mean_errors), linewidth=1, alpha=0.6)
-    plt.legend()
+    # plt.legend()
     plt.show()

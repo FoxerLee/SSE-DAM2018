@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from sklearn.cluster import KMeans
 
 from pandas.core.frame import DataFrame
 from sklearn.ensemble import RandomForestRegressor
@@ -36,15 +37,24 @@ def main():
     train_data.set_index(['Longitude_1', 'Latitude_1'], inplace=True, drop=False)
     train_data.sort_index(inplace=True)
     ids = list(set(train_data.index.tolist()))
+
+    y_pred = KMeans(n_init=1, random_state=0).fit_predict(ids)
+    print(y_pred)
+    # x = [id[0] for id in ids]
+    # y = [id[1] for id in ids]
+    # plt.scatter(x, y, c=y_pred)
+    plt.show()
+
+    ids = [(id, cluster) for (id, cluster) in zip(ids, y_pred)]
     # print(ids)
 
-    # errors_all = []
     median_errors = []
     for id in ids:
-        MS_datas = train_data.loc[id]
+        MS_datas = train_data.loc[id[0]]
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                            'Num_connected'], axis=1, inplace=False).as_matrix()
-        y = MS_datas[['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
+        y = MS_datas[
+            ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
 
         # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
         random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -53,7 +63,6 @@ def main():
         print("MS {}".format(id))
         errors = []
         for i in range(10):
-
             # 切分训练集和验证集
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
@@ -66,38 +75,31 @@ def main():
             # errors.append(utils.pos_error(y_test, y_pred))
         median_error = np.percentile(np.array(errors).mean(axis=0), 50)
         print("Median error: {}".format(median_error))
-        median_errors.append([id, median_error])
+        median_errors.append([id[0], median_error, id[1]])
         # errors_all.append([id, errors])
         print("****************************")
-    median_errors = DataFrame(median_errors, columns=['id', 'median_error'])
+    median_errors = DataFrame(median_errors, columns=['id', 'median_error', 'cluster'])
     median_errors.set_index(['median_error'], inplace=True, drop=False)
     median_errors.sort_index(inplace=True)
     print(median_errors)
 
     MS_number = median_errors.shape[0]
-    topk_best = median_errors.iloc[:int(MS_number*0.2)]['id'].as_matrix().tolist()
-    topk_worst = median_errors.iloc[int(MS_number*0.8):]['id'].as_matrix().tolist()
-
-    # print(topk_best)
-    # print(topk_worst)
-    best_data = DataFrame()
-    for best in topk_best:
-        best_data = pd.concat([best_data, train_data.loc[best]], axis=0)
-    # print(best_data)
-
+    topk_worst = median_errors.iloc[int(MS_number * 0.8):][['id', 'cluster']].as_matrix().tolist()
     for worst in topk_worst:
-        MS_datas = pd.concat([train_data.loc[worst], best_data])
-        # MS_datas = best_data
+        similars = median_errors[median_errors['cluster'] == worst[1]].as_matrix().tolist()
+
+        MS_datas = worst_data = train_data.loc[worst[0]]
+        X_worst = worst_data.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
+                                   'Num_connected'], axis=1, inplace=False).as_matrix()
+        y_worst = worst_data[
+            ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
+        for similar in similars:
+            MS_datas = pd.concat([MS_datas, train_data.loc[similar[0]]])
+
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                            'Num_connected'], axis=1, inplace=False).as_matrix()
         y = MS_datas[
             ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
-
-        worst_data = train_data.loc[worst]
-        X_worst = worst_data.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
-                                   'Num_connected'], axis=1, inplace=False).as_matrix()
-        y_worst = worst_data[
-                  ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
 
         # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的，同时每一次的实验的数据集也是一样的，从而提升结果的可信度
         random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -121,9 +123,6 @@ def main():
         # median_errors.append([worst, median_error])
         # errors_all.append([id, errors])
         print("****************************")
-
-    # utils.cdf_figure_each(errors_all)
-    # utils.cdf_figure_overall(errors_all)
 
 
 if __name__ == '__main__':

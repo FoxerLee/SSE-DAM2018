@@ -58,6 +58,13 @@ def velocity(p1, p2):
 
 
 def fix_error(y_train, y_test, y_pred):
+    """
+    按照时间戳排序后，根据预测点的前后两点的速度对预测点进行修正，这是b问和a问中相差的部分，也是最关键的部分
+    :param y_train:
+    :param y_test:
+    :param y_pred:
+    :return:
+    """
     ll_pred = []
 
     for i in range(len(y_pred)):
@@ -201,13 +208,14 @@ def main():
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
     errors_all = []
-
+    errors_all_cor = []
     # 高斯朴素贝叶斯分类器
     errors = []
     errors_cor = []
     print("Gaussian")
-    start = datetime.datetime.now()
+
     for i in range(10):
+        start = datetime.datetime.now()
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[0])
 
@@ -222,13 +230,16 @@ def main():
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
     errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
     print("****************************")
+
     # K近邻分类器
     errors = []
     errors_cor = []
     print("KNeighbors")
-    start = datetime.datetime.now()
+
     for i in range(10):
+        start = datetime.datetime.now()
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
@@ -242,71 +253,127 @@ def main():
 
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
     print("****************************")
-    # # 决策树分类器
-    # errors = []
-    # print("DecisionTree")
-    # for i in range(10):
-    #     # 切分训练集和验证集
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
-    #
-    #     clf = DecisionTreeClassifier()
-    #     y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
-    #     overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-    #     errors.append(utils.pos_error(y_test, y_pred))
-    # errors_all.append(errors)
-    # print("****************************")
-    # # 随机森林
-    # errors = []
-    # print("RandomForest")
-    # for i in range(10):
-    #     # 切分训练集和验证集
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
-    #
-    #     clf = RandomForestClassifier(max_depth=20, random_state=0)
-    #     y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
-    #     overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-    #     errors.append(utils.pos_error(y_test, y_pred))
-    # errors_all.append(errors)
-    # print("****************************")
-    # # AdaBoost
-    # errors = []
-    # print("AdaBoost")
-    # for i in range(10):
-    #     # 切分训练集和验证集
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
-    #
-    #     clf = AdaBoostClassifier(base_estimator=None)
-    #     y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
-    #     overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-    #     errors.append(utils.pos_error(y_test, y_pred))
-    # errors_all.append(errors)
-    # print("****************************")
-    # # Bagging
-    # errors = []
-    # print("GradientBoosting")
-    # for i in range(10):
-    #     # 切分训练集和验证集
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
-    #
-    #     clf = BaggingClassifier(n_estimators=20)
-    #     y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
-    #     overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-    #     errors.append(utils.pos_error(y_test, y_pred))
-    # errors_all.append(errors)
-    # print("****************************")
-    # # GradientBoosting
-    # errors = []
-    # print("GradientBoosting")
-    # for i in range(10):
-    #     # 切分训练集和验证集
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
-    #
-    #     clf = GradientBoostingClassifier(n_estimators=2)
-    #     y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
-    #     overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-    #     errors.append(utils.pos_error(y_test, y_pred))
-    # errors_all.append(errors)
+
+    # 决策树分类器
+    errors = []
+    errors_cor = []
+    print("DecisionTree")
+
+    for i in range(10):
+        start = datetime.datetime.now()
+        # 切分训练集和验证集
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+        clf = DecisionTreeClassifier()
+        y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        errors_cor.append(fix_error(y_train, y_test, y_pred))
+        # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        errors.append(utils.pos_error(y_test, y_pred))
+        print("Finish range {}".format(i))
+        print("Time: {}".format(datetime.datetime.now() - start))
+
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
+    print("****************************")
+
+    # 随机森林
+    errors = []
+    errors_cor = []
+    print("RandomForest")
+
+    for i in range(10):
+        start = datetime.datetime.now()
+        # 切分训练集和验证集
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+        clf = RandomForestClassifier(max_depth=20, random_state=0)
+        y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        errors_cor.append(fix_error(y_train, y_test, y_pred))
+        # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        errors.append(utils.pos_error(y_test, y_pred))
+        print("Finish range {}".format(i))
+        print("Time: {}".format(datetime.datetime.now() - start))
+
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
+    print("****************************")
+
+    # AdaBoost
+    errors = []
+    errors_cor = []
+    print("AdaBoost")
+
+    for i in range(10):
+        start = datetime.datetime.now()
+        # 切分训练集和验证集
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+        clf = AdaBoostClassifier(base_estimator=None)
+        y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        errors_cor.append(fix_error(y_train, y_test, y_pred))
+        # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        errors.append(utils.pos_error(y_test, y_pred))
+        print("Finish range {}".format(i))
+        print("Time: {}".format(datetime.datetime.now() - start))
+
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
+    print("****************************")
+
+    # Bagging
+    errors = []
+    errors_cor = []
+    print("Bagging")
+    for i in range(10):
+        start = datetime.datetime.now()
+        # 切分训练集和验证集
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+        clf = BaggingClassifier(n_estimators=20)
+        y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        errors_cor.append(fix_error(y_train, y_test, y_pred))
+        # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        errors.append(utils.pos_error(y_test, y_pred))
+        print("Finish range {}".format(i))
+        print("Time: {}".format(datetime.datetime.now() - start))
+
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
+    print("****************************")
+
+    # GradientBoosting
+    errors = []
+    errors_cor = []
+    print("GradientBoosting")
+    for i in range(10):
+        start = datetime.datetime.now()
+        # 切分训练集和验证集
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+
+        clf = GradientBoostingClassifier(n_estimators=2)
+        y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        errors_cor.append(fix_error(y_train, y_test, y_pred))
+        # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        errors.append(utils.pos_error(y_test, y_pred))
+        print("Finish range {}".format(i))
+        print("Time: {}".format(datetime.datetime.now() - start))
+
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Median error after correct: {}".format(np.percentile(np.array(errors_cor).mean(axis=0), 50)))
+    errors_all.append(errors)
+    errors_all_cor.append(errors_cor)
+    print("****************************")
     #
     # utils.cdf_figure(errors_all)
 

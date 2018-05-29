@@ -51,35 +51,27 @@ def precision_recall(y_true, y_pred):
     top10 = sort_d.iloc[0:10].index.tolist()
     # print(top10)
 
-    overall_pre = result.split('\n')[-2].split('      ')[1]
-    print(overall_pre)
+    overall_pre = float(result.split('\n')[-2].split('      ')[1])
+    # print(overall_pre)
 
     res = result.split('\n')
     # res = res[:-1]
     top10_pre = []
     top10_recall = []
+    top10_f = []
     for r in res:
+
         r = r.lstrip().split('      ')
-        # print(type(r[0]))
-        # print(type(top10[0]))
+
         try:
             if float(r[0]) in top10:
-                top10_pre.append([r[0], r[1]])
-                top10_recall.append([r[0], r[2]])
-                # print(r[0])
-                # print(r[1])
-                # print("=====")
+                top10_pre.append(float(r[1]))
+                top10_recall.append(float(r[2]))
+                top10_f.append(float(r[3]))
         except:
             continue
-    print(top10_pre)
-    print(top10_recall)
-    print("=========")
 
-    # for i in top10:
-    # f = open('result.txt', 'w')
-    # f.write(result)
-    # f.close()
-    return overall_pre, top10_pre, top10_recall
+    return overall_pre, top10_pre, top10_recall, top10_f
 
 
 def pos_error(y_true, y_pred):

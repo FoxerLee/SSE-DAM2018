@@ -5,20 +5,6 @@ import math
 
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
-from sklearn.metrics import classification_report
-
-# 左下角坐标
-lb_Longitude = 121.20120490000001
-lb_Latitude = 31.28175691
-# 右上角坐标
-rt_Longitude = 121.2183295
-rt_Latitude = 31.29339344
-# 格子个数是 82*65
-y_box_num = 65
-X_box_num = 82
-# 每一个格子所占的经纬度
-per_lon = (rt_Longitude - lb_Longitude)/X_box_num
-per_lat = (rt_Latitude - lb_Latitude)/y_box_num
 
 
 def haversine(lon1, lat1, lon2, lat2):  # 经度1，纬度1，经度2，纬度2 （十进制度数）
@@ -37,38 +23,6 @@ def haversine(lon1, lat1, lon2, lat2):  # 经度1，纬度1，经度2，纬度2 
     c = 2 * asin(sqrt(a))
     r = 6371  # 地球平均半径，单位为公里
     return c * r * 1000
-
-
-def pos_error(y_true, y_pred):
-    """
-    计算位置误差
-    :param y_true:
-    :param y_pred:
-    :return:
-    """
-    ll_pred = []
-    for y in y_pred:
-        # lon = lb_Longitude + (y % X_box_num) * ()
-        # lat = lb_Latitude +
-        X_box = int(y % X_box_num)
-        y_box = int(y / X_box_num) + 1
-        if X_box == 0:
-            X_box = X_box_num
-            y_box -= 1
-        lon = lb_Longitude + per_lon * X_box
-        lat = lb_Latitude + per_lat * y_box
-
-        ll_pred.append([lon, lat])
-    ll_true = np.delete(y_true, 0, axis=1).tolist()
-    # print(ll_true)
-    # print(ll_pred)
-    errors = []
-    for (true, pred) in zip(ll_true, ll_pred):
-        error = haversine(true[0], true[1], pred[0], pred[1])
-        errors.append(error)
-    errors.sort()
-    return errors
-    # print(errors[int(len(errors)/2)])
 
 
 def gongcan_to_ll():
@@ -134,65 +88,62 @@ def gongcan_to_ll():
     new_data_2g = DataFrame(data_2g_list)
     new_data_2g.columns = indexs
 
-    # print(new_data_2g)
-    # print(except_ID)
-    # print(len(except_ID))
     return new_data_2g
 
 
-def ll_to_grid(ll_data_2g):
+def pos_error(y_true, y_pred):
+    ll_pred = []
+    for (true, pred) in zip(y_true, y_pred):
+        lon = pred[0] + true[4]
+        lat = pred[1] + true[5]
+        ll_pred.append([lon, lat])
+    ll_true = np.delete(y_true, [0, 1, 4, 5], axis=1)
+
+    errors = []
+    for (true, pred) in zip(ll_true, ll_pred):
+        error = haversine(true[0], true[1], pred[0], pred[1])
+        errors.append(error)
+    errors.sort()
+    return errors
+
+
+def cdf_figure_each(errors_all):
     """
-    grid_num 是从1开始编号的
-    :param ll_data_2g:
+    绘制的是对于每一个MR所生成的模型的CDF图
+    :param errors_all:
     :return:
     """
-
-    # y_box_num = int((haversine(lb_Longitude, lb_Latitude, lb_Longitude, rt_Latitude))/20) + 1
-    # X_box_num = int((haversine(lb_Longitude, lb_Latitude, rt_Longitude, lb_Latitude))/20) + 1
-    # print(X_box_num)
-    # print(y_box_num)
-    # print(ll_data_2g)
-    ll_data_2g_list = ll_data_2g.as_matrix().tolist()
-    for row in ll_data_2g_list:
-        lon = row[2]
-        lat = row[3]
-        # grid_index = calculate_grid(lb_Latitude, lb_Longitude, lat, lon)
-        y_length = haversine(lb_Longitude, lb_Latitude, lb_Longitude, lat)
-        X_length = haversine(lb_Longitude, lb_Latitude, lon, lb_Latitude)
-
-        y = int(y_length / 20)
-        X = int(X_length / 20)
-        if y_length % 20 != 0:
-            y += 1
-        if X_length % 20 != 0:
-            X += 1
-
-        grid_num = X + (y-1) * X_box_num
-        row.append(grid_num)
-
-    indexs = ll_data_2g.columns.values.tolist()
-    indexs.append('grid_num')
-    train_data = DataFrame(ll_data_2g_list)
-    train_data.columns = indexs
-
-    # print(train_data)
-    return train_data
-
-
-def cdf_figure(errors_all):
     plt.figure('Comparision 2G DATA')
     # ax = plt.gca()
     plt.xlabel('CDF')
     plt.ylabel('Error(meters)')
-    X_list = []
-    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
-    for i in range(1220):
-        X_list.append((float(i)/1220.0))
 
     for i in range(len(errors_all)):
-        errors = np.array(errors_all[i])
+        errors = np.array(errors_all[i][1])
         mean_errors = errors.mean(axis=0)
         # print(mean_errors)
-        plt.plot(X_list, list(mean_errors), linewidth=1, alpha=0.6, label=labels[i])
+        plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))],
+                 list(mean_errors), linewidth=1, alpha=0.6)
+    plt.legend()
+    plt.show()
+
+
+def cdf_figure_overall(errors_all):
+    """
+    绘制的是将所有MR的模型预测结果合并在一起后的误差图
+    :param errors_all:
+    :return:
+    """
+    plt.figure('Comparision 2G DATA')
+    plt.xlabel('CDF')
+    plt.ylabel('Error(meters)')
+    mean_errors = []
+    for i in range(len(errors_all)):
+        errors = np.array(errors_all[i][1])
+        mean_error = errors.mean(axis=0)
+        mean_errors.extend(mean_error)
+    mean_errors.sort()
+    plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
+             list(mean_errors), linewidth=1, alpha=0.6)
     plt.legend()
     plt.show()

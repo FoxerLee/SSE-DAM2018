@@ -40,101 +40,246 @@ def main():
     errors_all = []
     # 高斯朴素贝叶斯分类器
     errors = []
-    print("Gaussian")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         gnb = GaussianNB()
         y_pred = gnb.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:,0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("Gaussian")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
     print("****************************")
+
     # K近邻分类器
     errors = []
-    print("KNeighbors")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         neigh = KNeighborsClassifier(n_neighbors=3)
         y_pred = neigh.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-        errors.append(errors)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
+        errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("KNeighbors")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    errors_all.append(errors)
     print("****************************")
+
     # 决策树分类器
     errors = []
-    print("DecisionTree")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = DecisionTreeClassifier()
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("DecisionTree")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
     print("****************************")
+
     # 随机森林
     errors = []
-    print("RandomForest")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = RandomForestClassifier(max_depth=20, random_state=0)
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("RandomForest")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
     print("****************************")
+
     # AdaBoost
     errors = []
-    print("AdaBoost")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = AdaBoostClassifier(base_estimator=None)
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("AdaBoost")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
     print("****************************")
+
     # Bagging
     errors = []
-    print("GradientBoosting")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = BaggingClassifier(n_estimators=20)
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("Bagging")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
     print("****************************")
+
     # GradientBoosting
     errors = []
-    print("GradientBoosting")
+    overall_pres = []
+    top10_pres = []
+    top10_recalls = []
+    top10_fs = []
     for i in range(10):
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = GradientBoostingClassifier(n_estimators=2)
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
-        overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
+        overall_pres.append(overall_pre)
+        top10_pres.append(top10_pre)
+        top10_recalls.append(top10_recall)
+        top10_fs.append(top10_f)
         errors.append(utils.pos_error(y_test, y_pred))
+
+    top10_recalls = np.array(top10_recalls).mean(axis=0)
+    top10_recalls.sort()
+    top10_pres = np.array(top10_pres).mean(axis=0)
+    top10_pres.sort()
+    top10_fs = np.array(top10_fs).mean(axis=0)
+    top10_fs.sort()
+    print("GradientBoosting")
+    print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
+    print("Top10 precision: {}".format(top10_pres))
+    print("Top10 recall: {}".format(top10_recalls))
+    print("Top10 f-measurement: {}".format(top10_fs))
+    print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
     errors_all.append(errors)
+    print("****************************")
 
     utils.cdf_figure(errors_all)
 
 
 if __name__ == '__main__':
     main()
-    # read_data('./data/data_2g.csv')
-    # iris = datasets.load_iris()
-    # print(iris.data)
-    # print(type(iris.data))
+
 
