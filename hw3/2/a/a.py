@@ -303,13 +303,13 @@ def main():
     # 对于某一个vipno，先针对pluno进行统计，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'pluno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'pluno')
     tmp = DataFrame({'U_I_mean_count_AGG_234': mean, 'U_I_std_count_AGG_234': std, 'U_I_max_count_AGG_234': max,
                      'U_I_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'pluno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'pluno')
     tmp = DataFrame({'U_I_mean_count_AGG_567': mean, 'U_I_std_count_AGG_567': std, 'U_I_max_count_AGG_567': max,
                      'U_I_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
@@ -317,13 +317,13 @@ def main():
     # 对于某一个vipno，先针对dptno进行统计，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'dptno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'dptno')
     tmp = DataFrame({'U_C_mean_count_AGG_234': mean, 'U_C_std_count_AGG_234': std, 'U_C_max_count_AGG_234': max,
                      'U_C_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'dptno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'dptno')
     tmp = DataFrame({'U_C_mean_count_AGG_567': mean, 'U_C_std_count_AGG_567': std, 'U_C_max_count_AGG_567': max,
                      'U_C_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
@@ -331,13 +331,13 @@ def main():
     # 对于某一个vipno，先针对bndno进行统计，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'bndno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
     tmp = DataFrame({'U_B_mean_count_AGG_234': mean, 'U_B_std_count_AGG_234': std, 'U_B_max_count_AGG_234': max,
                      'U_B_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'bndno', 'vipno')
+    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
     tmp = DataFrame({'U_B_mean_count_AGG_567': mean, 'U_B_std_count_AGG_567': std, 'U_B_max_count_AGG_567': max,
                      'U_B_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
@@ -350,13 +350,13 @@ def main():
     # 对于某个pluno，针对单个vipno进行统计总时间内购买的次数，再进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'pluno')
+    mean, std, max, median = X_Y_AGG(datas, 'pluno', 'vipno')
     tmp = DataFrame({'I_U_mean_count_AGG_234': mean, 'I_U_std_count_AGG_234': std, 'I_U_max_count_AGG_234': max,
                      'I_U_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'pluno')
+    mean, std, max, median = X_Y_AGG(datas, 'pluno', 'vipno')
     tmp = DataFrame({'I_U_mean_count_AGG_567': mean, 'I_U_std_count_AGG_567': std, 'I_U_max_count_AGG_567': max,
                      'I_U_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
@@ -364,13 +364,13 @@ def main():
     # 对于某个dptno，针对单个vipno进行统计总时间内购买的次数，再进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'dptno')
+    mean, std, max, median = X_Y_AGG(datas, 'dptno', 'vipno')
     tmp = DataFrame({'C_U_mean_count_AGG_234': mean, 'C_U_std_count_AGG_234': std, 'I_U_max_count_AGG_234': max,
                      'C_U_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'dptno')
+    mean, std, max, median = X_Y_AGG(datas, 'dptno', 'vipno')
     tmp = DataFrame({'C_U_mean_count_AGG_567': mean, 'C_U_std_count_AGG_567': std, 'C_U_max_count_AGG_567': max,
                      'C_U_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
@@ -378,13 +378,13 @@ def main():
     # 对于某个bndno，针对单个vipno进行统计总时间内购买的次数，再进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
+    mean, std, max, median = X_Y_AGG(datas, 'bndno', 'vipno')
     tmp = DataFrame({'B_U_mean_count_AGG_234': mean, 'B_U_std_count_AGG_234': std, 'B_U_max_count_AGG_234': max,
                      'B_U_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月
     datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
-    mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
+    mean, std, max, median = X_Y_AGG(datas, 'bndno', 'vipno')
     tmp = DataFrame({'B_U_mean_count_AGG_567': mean, 'B_U_std_count_AGG_567': std, 'B_U_max_count_AGG_567': max,
                      'B_U_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
