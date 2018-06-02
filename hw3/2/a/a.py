@@ -31,6 +31,49 @@ def add_month_day():
     return datas
 
 
+def X_count(datas, type):
+    """
+    对于type字段，其在当前数据集中，出现的次数
+    :param datas:
+    :param type1:
+    :return:
+    """
+    types = list(set(datas[type].as_matrix().tolist()))
+    aggr = dict.fromkeys(types, 0)
+    for index, data in datas.iterrows():
+        aggr[data[type]] += 1
+    res = []
+    # print(aggr)
+    for (key, value) in aggr.items():
+        # -1代表是空值
+        if value != 0 and key != -1:
+            row = str(key) + '-' + str(value)
+            res.append(row)
+    return res
+
+
+def X_money(datas, type):
+    """
+    对于type字段，其在当前数据集中，金额的总和
+    :param datas:
+    :param type:
+    :return:
+    """
+    types = list(set(datas[type].as_matrix().tolist()))
+    aggr = dict.fromkeys(types, 0)
+    for index, data in datas.iterrows():
+        aggr[data[type]] += data['amt']
+
+    res = []
+    # print(aggr)
+    for (key, value) in aggr.items():
+        # -1代表是空值
+        if value != 0 and key != -1:
+            row = str(key) + '-' + str(value)
+            res.append(row)
+    return res
+
+
 def X_Y_count(datas, type1, type2):
     """
     对于type1字段（如vipno），其在当前数据集中，购买的type2字段（如pluno）的次数
@@ -122,6 +165,54 @@ def X_Y_AGG(datas, type1, type2):
     return mean, std, max, median
 
 
+def X_Y_money_AGG(datas, type1, type2):
+    """
+    对于type1字段，针对type2字段统计购买的金额，再进行aggregation，agg操作包含mean、std、max、median
+    :param datas:
+    :param type1:
+    :param type2:
+    :return:
+    """
+    types1 = list(set(datas[type1].as_matrix().tolist()))
+    types2 = list(set(datas[type2].as_matrix().tolist()))
+
+    indexs = [(x, y) for x in types1 for y in types2]
+    aggr = dict.fromkeys(indexs, 0.0)
+    for index, data in datas.iterrows():
+        t1 = data[type1]
+        t2 = data[type2]
+        aggr[tuple((t1, t2))] += float(data['amt'])
+    # print(list(aggr.items()))
+    # aggr = DataFrame(list(aggr), columns=[type1, type2, 'money'])
+    tmp = []
+    for (key, value) in aggr.items():
+        if value != 0.0:
+            tmp.append((key[0], key[1], value))
+    aggr = DataFrame(tmp, columns=[type1, type2, 'money'])
+
+    mean = []
+    std = []
+    max = []
+    median = []
+
+    aggr.set_index([type1], inplace=True, drop=False)
+    indexs = set(aggr.index.tolist())
+
+    for i in indexs:
+        d = np.array(aggr.loc[(i,), 'money'].tolist())
+        mean.append(str(i) + '-' + str(d.mean()))
+        std.append(str(i) + '-' + str(d.std()))
+        max.append(str(i) + '-' + str(d.max()))
+        median.append(str(i) + '-' + str(d[int(len(d)/2)]))
+
+    # for r in res:
+    #     mean.append(str(r[0]) + '-' + str(np.array(r[1]).mean()))
+    #     std.append(str(r[0]) + '-' + str(np.array(r[1]).std()))
+    #     max.append(str(r[0]) + '-' + str(np.array(r[1]).max()))
+    #     median.append(str(r[0]) + '-' + str(r[1][int(len(r[1])/2)]))
+    return mean, std, max, median
+
+
 def main():
     month_datas = add_month_day()
     # 填补bndno的空值
@@ -132,6 +223,37 @@ def main():
 
     print("TYPE.1 count/ratio - count")
     start = datetime.datetime.now()
+
+    # 对于每个vipno，每一个月进行购买的次数
+    for month in months:
+        res = X_count(month_datas.loc[month], 'vipno')
+        datas = DataFrame(res, columns=['U_month_count_'+month])
+        references = pd.concat([references, datas], axis=1)
+    # 对于每个vipno，其总体进行购买的次数
+    # 2,3,4月
+    datas = X_count(pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']]), 'vipno')
+    res = DataFrame(datas, columns=['U_overall_count_234'])
+    references = pd.concat([references, res], axis=1)
+    # 5,6,7月
+    datas = X_count(pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']]), 'vipno')
+    res = DataFrame(datas, columns=['U_overall_count_567'])
+    references = pd.concat([references, res], axis=1)
+
+    # 对于每个vipno，每一个月花费的金额
+    for month in months:
+        res = X_money(month_datas.loc[month], 'vipno')
+        datas = DataFrame(res, columns=['U_month_money_'+month])
+        references = pd.concat([references, datas], axis=1)
+    # 对于每个vipno，其总体进行购买的次数
+    # 2,3,4月
+    datas = X_money(pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']]), 'vipno')
+    res = DataFrame(datas, columns=['U_overall_money_234'])
+    references = pd.concat([references, res], axis=1)
+    # 5,6,7月
+    datas = X_money(pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']]), 'vipno')
+    res = DataFrame(datas, columns=['U_overall_money_567'])
+    references = pd.concat([references, res], axis=1)
+
     # 对于每个vipno，其在每一个月所购买的某种pluno的次数
     for month in months:
         res = X_Y_count(month_datas.loc[month], 'vipno', 'pluno')
@@ -300,7 +422,7 @@ def main():
 
     print("TYPE.2 AGG feature - brand/category/item AGG")
     start = datetime.datetime.now()
-    # 对于某一个vipno，先针对pluno进行统计，然后进行aggregation
+    # 对于某一个vipno，先针对pluno进行统计次数，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
     mean, std, max, median = X_Y_AGG(datas, 'vipno', 'pluno')
@@ -314,7 +436,21 @@ def main():
                      'U_I_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
 
-    # 对于某一个vipno，先针对dptno进行统计，然后进行aggregation
+    # 对于某一个vipno，先针对pluno进行统计金额，然后进行aggregation
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'pluno')
+    tmp = DataFrame({'U_I_mean_money_AGG_234': mean, 'U_I_std_money_AGG_234': std, 'U_I_max_money_AGG_234': max,
+                     'U_I_median_money_AGG_234': median})
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'pluno')
+    tmp = DataFrame({'U_I_mean_money_AGG_567': mean, 'U_I_std_money_AGG_567': std, 'U_I_max_money_AGG_567': max,
+                     'U_I_median_money_AGG_567': median})
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于某一个vipno，先针对dptno进行统计次数，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
     mean, std, max, median = X_Y_AGG(datas, 'vipno', 'dptno')
@@ -328,7 +464,21 @@ def main():
                      'U_C_median_count_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
 
-    # 对于某一个vipno，先针对bndno进行统计，然后进行aggregation
+    # 对于某一个vipno，先针对dptno进行统计金额，然后进行aggregation
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'dptno')
+    tmp = DataFrame({'U_C_mean_money_AGG_234': mean, 'U_C_std_money_AGG_234': std, 'U_C_max_money_AGG_234': max,
+                     'U_C_median_money_AGG_234': median})
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'dptno')
+    tmp = DataFrame({'U_C_mean_money_AGG_567': mean, 'U_C_std_money_AGG_567': std, 'U_C_max_money_AGG_567': max,
+                     'U_C_median_money_AGG_567': median})
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于某一个vipno，先针对bndno进行统计次数，然后进行aggregation
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
     mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
@@ -340,6 +490,20 @@ def main():
     mean, std, max, median = X_Y_AGG(datas, 'vipno', 'bndno')
     tmp = DataFrame({'U_B_mean_count_AGG_567': mean, 'U_B_std_count_AGG_567': std, 'U_B_max_count_AGG_567': max,
                      'U_B_median_count_AGG_567': median})
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于某一个vipno，先针对dptno进行统计金额，然后进行aggregation
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'bndno')
+    tmp = DataFrame({'U_B_mean_money_AGG_234': mean, 'U_B_std_money_AGG_234': std, 'U_B_max_money_AGG_234': max,
+                     'U_B_median_money_AGG_234': median})
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    mean, std, max, median = X_Y_money_AGG(datas, 'vipno', 'bndno')
+    tmp = DataFrame({'U_B_mean_money_AGG_567': mean, 'U_B_std_money_AGG_567': std, 'U_B_max_money_AGG_567': max,
+                     'U_B_median_money_AGG_567': median})
     references = pd.concat([references, tmp], axis=1)
 
     print(datetime.datetime.now() - start)
@@ -365,7 +529,7 @@ def main():
     # 2,3,4月
     datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
     mean, std, max, median = X_Y_AGG(datas, 'dptno', 'vipno')
-    tmp = DataFrame({'C_U_mean_count_AGG_234': mean, 'C_U_std_count_AGG_234': std, 'I_U_max_count_AGG_234': max,
+    tmp = DataFrame({'C_U_mean_count_AGG_234': mean, 'C_U_std_count_AGG_234': std, 'C_U_max_count_AGG_234': max,
                      'C_U_median_count_AGG_234': median})
     references = pd.concat([references, tmp], axis=1)
     # 5,6,7月

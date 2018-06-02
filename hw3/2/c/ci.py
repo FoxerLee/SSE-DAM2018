@@ -19,39 +19,48 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 def feature_name_generator():
     type1 = 'U'
-    type2 = 'B'
+    type2s = ['I', 'B', 'C']
     months = ['02', '03', '04']
     aggrs = ['mean', 'std', 'max', 'median']
     overall = '234'
     feature_names = []
     # TYPE.1 count/ratio - count
-    for m in months:
-        feature_names.append(type1+'_'+type2+'_'+'month_count_'+m)
-    feature_names.append(type1+'_'+type2+'_'+'overall_count_'+overall)
-    # TYPE.1 count/ratio - penetration
-    for m in months:
-        feature_names.append(type2+'_'+type1+'_'+'month_penetration_'+m)
-    feature_names.append(type2 + '_' + type1 + '_' + 'overall_penetration_' + overall)
-    # TYPE.1 count/ratio - product diversity
-    for m in months:
-        feature_names.append(type1 + '_' + type2 + '_' + 'month_diversity_' + m)
-    feature_names.append(type1 + '_' + type2 + '_' + 'overall_diversity_' + overall)
-    # TYPE.2 AGG feature - brand/category/item AGG
+    for month in months:
+        feature_names.append('U_month_count_'+month)
+    feature_names.append('U_overall_count_234')
+
+    for type2 in type2s:
+        # for m in months:
+        #     feature_names.append(type1+'_'+type2+'_'+'month_count_'+m)
+        # feature_names.append(type1+'_'+type2+'_'+'overall_count_'+overall)
+        # # TYPE.1 count/ratio - penetration
+        # for m in months:
+        #     feature_names.append(type2+'_'+type1+'_'+'month_penetration_'+m)
+        # feature_names.append(type2 + '_' + type1 + '_' + 'overall_penetration_' + overall)
+
+        # TYPE.1 count/ratio - product diversity
+        for m in months:
+            feature_names.append(type1 + '_' + type2 + '_' + 'month_diversity_' + m)
+        feature_names.append(type1 + '_' + type2 + '_' + 'overall_diversity_' + overall)
+        # TYPE.2 AGG feature - brand/category/item AGG
+        for a in aggrs:
+            feature_names.append(type1+'_'+type2+'_'+a+'_'+'count_AGG_'+overall)
+        # # TYPE.2 AGG feature - user AGG
+        # for a in aggrs:
+        #     feature_names.append(type2+'_'+type1+'_'+a+'_'+'count_AGG_'+overall)
+
+        # TYPE.2 AGG feature - month AGG
+        # for a in aggrs:
+        #     feature_names.append(type1 + '_' + type2 + '_month_count_' + a)
+        # for a in aggrs:
+        #     feature_names.append(type2 + '_' + type1 + '_month_penetration_' + a)
+        for a in aggrs:
+            feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
     for a in aggrs:
-        feature_names.append(type1+'_'+type2+'_'+a+'_'+'count_AGG_'+overall)
-    # TYPE.2 AGG feature - user AGG
-    for a in aggrs:
-        feature_names.append(type2+'_'+type1+'_'+a+'_'+'count_AGG_'+overall)
-    # TYPE.2 AGG feature - month AGG
-    for a in aggrs:
-        feature_names.append(type1 + '_' + type2 + '_month_count_' + a)
-    for a in aggrs:
-        feature_names.append(type2 + '_' + type1 + '_month_penetration_' + a)
-    for a in aggrs:
-        feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
+        feature_names.append(type1+'_month_count_'+a)
 
     feature_names.append('label')
-    # print(feature_names)
+    print(feature_names)
     # print(len(feature_names))
     return feature_names
 
@@ -59,127 +68,128 @@ def feature_name_generator():
 def train_generator():
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
-    indexs = datas['U_B_overall_count_234'].as_matrix().tolist()
+    indexs = datas['U_overall_count_234'].as_matrix().tolist()
 
     vps = []
     for i in indexs:
-        if i == 0:
-            continue
-        tmp = i.split('-')
-        # tmp[0]是vipno，tmp[1]是bndno
-        vps.append([tmp[0], tmp[1]])
+
+        if i != 0:
+            tmp = i.split('-')
+            # tmp[0]是vipno
+            vps.append(tmp[0])
     vps = np.array(vps)
     feature_names = feature_name_generator()
-
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
-    # tmp = DataFrame(vps, columns=['vipno', 'bndno'], dtype='object')
+    # tmp = DataFrame(vps, columns=['vipno', 'pluno'], dtype='object')
     # print(tmp)
-    train_datas = pd.concat([train_datas, DataFrame(vps, columns=['vipno', 'bndno'])], axis=1)
+    train_datas = pd.concat([train_datas, DataFrame(vps, columns=['vipno'])], axis=1)
     # print(train_datas)
     # print(train_datas.loc['22102005'])
 
     # 不同的阵容，存储的格式不一样，所以分开处理
-    start = datetime.datetime.now()
-    train_datas.set_index(['vipno', 'bndno'], inplace=True, drop=False)
-    for f in feature_names[:4]:
-        ds = datas[f].as_matrix().tolist()
-        # count = 0
-        for row in ds:
-            if row == 0:
-                continue
-            tmp = row.split('-')
-            # print(count)
-            # count += 1
-            train_datas.loc[(tmp[0], tmp[1]), f] = float(tmp[2])
-    print(datetime.datetime.now() - start)
-    print("***************")
-    start = datetime.datetime.now()
-    train_datas.set_index(['bndno'], inplace=True, drop=False)
-    for f in feature_names[4:8]:
-        # count = 0
-        ds = datas[f].as_matrix().tolist()
-        for row in ds:
-            if row == 0:
-                continue
-            tmp = row.split('-')
-            # print(count)
-            # count += 1
-            train_datas.loc[tmp[0], f] = float(tmp[1])
-    print(datetime.datetime.now() - start)
-    print("***************")
-    start = datetime.datetime.now()
-    for f in feature_names[16:20]:
-        ds = datas[f].as_matrix().tolist()
-        # count = 0
-        for row in ds:
-            if row == 0:
-                continue
-            tmp = row.split('-')
-            # print(count)
-            # count += 1
-            train_datas.loc[tmp[0], f] = float(tmp[1])
-    print(datetime.datetime.now() - start)
-    print("***************")
     train_datas.set_index(['vipno'], inplace=True, drop=False)
+    # print(train_datas.index)
+    start = datetime.datetime.now()
+    for f in feature_names[0:12]:
+        ds = datas[f].as_matrix().tolist()
+        # count = 0
+        for row in ds:
+            if row == 0:
+                continue
+            tmp = row.split('-')
+            # print(count)
+            # count += 1
+            # print(tmp[1])
+            train_datas.loc[tmp[0], f] = float(tmp[1])
+    print(datetime.datetime.now() - start)
+    print("***************")
 
     start = datetime.datetime.now()
-    for f in feature_names[8:16]:
+    for f in feature_names[16:24]:
         ds = datas[f].as_matrix().tolist()
         # count = 0
         for row in ds:
             if row == 0:
                 continue
             tmp = row.split('-')
-            if tmp[0] in train_datas.index.tolist():
-                train_datas.loc[tmp[0], f] = float(tmp[1])
+            # print(count)
+            # count += 1
+            # print(tmp[1])
+            train_datas.loc[tmp[0], f] = float(tmp[1])
+    print(datetime.datetime.now() - start)
+    print("***************")
+
+    start = datetime.datetime.now()
+    for f in feature_names[28:36]:
+        ds = datas[f].as_matrix().tolist()
+        # count = 0
+        for row in ds:
+            if row == 0:
+                continue
+            tmp = row.split('-')
+            # print(count)
+            # count += 1
+            # print(tmp[1])
+            train_datas.loc[tmp[0], f] = float(tmp[1])
     print(datetime.datetime.now() - start)
     print("***************")
 
     months = ['02', '03', '04']
     start = datetime.datetime.now()
-    train_datas.set_index(['vipno', 'bndno'], inplace=True, drop=False)
+    # train_datas.set_index(['vipno', 'pluno'], inplace=True, drop=False)
     for index, row in train_datas.iterrows():
-        tmp = []
-        for m in months:
-            tmp.append(row['U_B_month_count_'+m])
-        tmp.sort()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[20]] = np.array(tmp).mean()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[21]] = np.array(tmp).std()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[22]] = np.array(tmp).max()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[23]] = tmp[1]
 
         tmp = []
         for m in months:
-            tmp.append(row['B_U_month_penetration_' + m])
+            tmp.append(row['U_I_month_diversity_' + m])
         tmp.sort()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[24]] = np.array(tmp).mean()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[25]] = np.array(tmp).std()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[26]] = np.array(tmp).max()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[27]] = tmp[1]
+        train_datas.loc[(row['vipno'],), feature_names[12]] = np.array(tmp).mean()
+        train_datas.loc[(row['vipno'],), feature_names[13]] = np.array(tmp).std()
+        train_datas.loc[(row['vipno'],), feature_names[14]] = np.array(tmp).max()
+        train_datas.loc[(row['vipno'],), feature_names[15]] = tmp[1]
 
         tmp = []
         for m in months:
             tmp.append(row['U_B_month_diversity_' + m])
         tmp.sort()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[28]] = np.array(tmp).mean()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[29]] = np.array(tmp).std()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[30]] = np.array(tmp).max()
-        train_datas.loc[(row['vipno'], row['bndno']), feature_names[31]] = tmp[1]
+        train_datas.loc[(row['vipno'],), feature_names[24]] = np.array(tmp).mean()
+        train_datas.loc[(row['vipno'],), feature_names[25]] = np.array(tmp).std()
+        train_datas.loc[(row['vipno'],), feature_names[26]] = np.array(tmp).max()
+        train_datas.loc[(row['vipno'],), feature_names[27]] = tmp[1]
+
+        tmp = []
+        for m in months:
+            tmp.append(row['U_C_month_diversity_' + m])
+        tmp.sort()
+        train_datas.loc[(row['vipno'],), feature_names[36]] = np.array(tmp).mean()
+        train_datas.loc[(row['vipno'],), feature_names[37]] = np.array(tmp).std()
+        train_datas.loc[(row['vipno'],), feature_names[38]] = np.array(tmp).max()
+        train_datas.loc[(row['vipno'],), feature_names[39]] = tmp[1]
+
+        tmp = []
+        for m in months:
+            tmp.append(row['U_month_count_' + m])
+        tmp.sort()
+        train_datas.loc[(row['vipno'],), feature_names[40]] = np.array(tmp).mean()
+        train_datas.loc[(row['vipno'],), feature_names[41]] = np.array(tmp).std()
+        train_datas.loc[(row['vipno'],), feature_names[42]] = np.array(tmp).max()
+        train_datas.loc[(row['vipno'],), feature_names[43]] = tmp[1]
 
     print(datetime.datetime.now() - start)
     print("***************")
 
     start = datetime.datetime.now()
-    labels = datas['U_B_month_count_05'].as_matrix().tolist()
+    labels = datas['U_month_count_05'].as_matrix().tolist()
     indexs = train_datas.index
     for label in labels:
         # 0代表空值
         if label != 0:
             label = label.split('-')
-            if (label[0], label[1]) in indexs:
-                train_datas.loc[(label[0], label[1]), 'label'] = 1
+            if label[0] in indexs:
+                train_datas.loc[(label[0],), 'label'] = 1
     print(datetime.datetime.now() - start)
     print("***************")
+
     return train_datas
 
 
@@ -203,18 +213,19 @@ def draw_roc(fprs, tprs, thresholds, aucs):
 
 def main():
     train_datas = train_generator()
-    # train_datas.to_csv('X.csv')
-    train_datas.set_index(['vipno', 'bndno'], inplace=True, drop=True)
+    train_datas.to_csv('X.csv')
+    train_datas.set_index(['vipno'], inplace=True, drop=True)
     train = train_datas.as_matrix()
     X = np.delete(train, train.shape[1] - 1, axis=1)
     y = train[:, train.shape[1] - 1]
+
     # 用于做降采样，以确保正负样本的数量相近
     # rus = RandomUnderSampler(return_indices=True)
     # X, y, idx_resampled = rus.fit_sample(X, y)
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
     # X, y = ros.fit_sample(X, y)
-    X, y = SMOTE(kind='borderline1').fit_sample(X, y)
+    # X, y = SMOTE(kind='borderline1').fit_sample(X, y)
 
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]

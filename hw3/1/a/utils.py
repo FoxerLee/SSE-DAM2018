@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import math
 
@@ -222,12 +223,27 @@ def cdf_figure(errors_all):
     X_list = []
     labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
     for i in range(1220):
-        X_list.append((float(i)/1220.0))
+        X_list.append((float(i) / 1220.0))
 
     for i in range(len(errors_all)):
         errors = np.array(errors_all[i])
         mean_errors = errors.mean(axis=0)
         # print(mean_errors)
-        plt.plot(X_list, list(mean_errors), linewidth=1, alpha=0.6, label=labels[i])
+        plt.plot(X_list, list(mean_errors), '--', linewidth=1, alpha=0.6, label=labels[i])
+
+    plt.legend()
+    plt.show()
+
+
+def time_figure(times):
+    plt.figure('Comparision 2G DATA')
+    # ax = plt.gca()
+    times = [3.16, 2.18, 4.08, 8.14, 75.75, 55.69, 1012.13]
+    plt.xlabel('Time(s)')
+    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    # X = [i for i in range(1, 8)]
+    # for i in range(7):
+    plt.barh(labels, times, linewidth=2, alpha=0.6)
+
     plt.legend()
     plt.show()

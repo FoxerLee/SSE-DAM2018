@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import datetime
+import warnings
+warnings.filterwarnings('ignore')
 
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
@@ -39,6 +42,7 @@ def main():
 
     errors_all = []
     # 高斯朴素贝叶斯分类器
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -58,21 +62,20 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("Gaussian")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # K近邻分类器
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -92,21 +95,20 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("KNeighbors")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # 决策树分类器
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -126,21 +128,20 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("DecisionTree")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # 随机森林
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -160,21 +161,20 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("RandomForest")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # AdaBoost
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -194,21 +194,20 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("AdaBoost")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # Bagging
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
@@ -228,27 +227,27 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("Bagging")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
     # GradientBoosting
+    start = datetime.datetime.now()
     errors = []
     overall_pres = []
     top10_pres = []
     top10_recalls = []
     top10_fs = []
     for i in range(10):
+        print(i)
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
@@ -262,17 +261,15 @@ def main():
         errors.append(utils.pos_error(y_test, y_pred))
 
     top10_recalls = np.array(top10_recalls).mean(axis=0)
-    top10_recalls.sort()
     top10_pres = np.array(top10_pres).mean(axis=0)
-    top10_pres.sort()
     top10_fs = np.array(top10_fs).mean(axis=0)
-    top10_fs.sort()
     print("GradientBoosting")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Top10 precision: {}".format(top10_pres))
     print("Top10 recall: {}".format(top10_recalls))
     print("Top10 f-measurement: {}".format(top10_fs))
     print("Median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Time spend: {}".format(datetime.datetime.now() - start))
     errors_all.append(errors)
     print("****************************")
 
@@ -281,5 +278,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-
+    # utils.time_figure([])
 

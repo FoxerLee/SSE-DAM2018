@@ -234,10 +234,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         gnb = GaussianNB()
-        y_pred = gnb.fit(X_train, y_train).predict(X_test)
+        gnb.fit(X_train, y_train)
+        y_pred = gnb.predict(X_test)
+        y_pred_proba = gnb.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -263,10 +265,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         neigh = KNeighborsClassifier(n_neighbors=3)
-        y_pred = neigh.fit(X_train, y_train).predict(X_test)
+        neigh.fit(X_train, y_train)
+        y_pred = neigh.predict(X_test)
+        y_pred_proba = neigh.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -292,10 +296,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = DecisionTreeClassifier()
-        y_pred = clf.fit(X_train, y_train).predict(X_test)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        y_pred_proba = clf.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -321,10 +327,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = RandomForestClassifier(max_depth=20, random_state=0)
-        y_pred = clf.fit(X_train, y_train).predict(X_test)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        y_pred_proba = clf.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -350,10 +358,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = AdaBoostClassifier(base_estimator=None)
-        y_pred = clf.fit(X_train, y_train).predict(X_test)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        y_pred_proba = clf.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -379,10 +389,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = BaggingClassifier(n_estimators=20)
-        y_pred = clf.fit(X_train, y_train).predict(X_test)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        y_pred_proba = clf.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -408,10 +420,12 @@ def main():
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
         clf = GradientBoostingClassifier(n_estimators=2)
-        y_pred = clf.fit(X_train, y_train).predict(X_test)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        y_pred_proba = clf.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
