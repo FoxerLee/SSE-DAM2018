@@ -55,8 +55,8 @@ def pos_error(y_true, y_pred):
         if X_box == 0:
             X_box = X_box_num
             y_box -= 1
-        lon = lb_Longitude + per_lon * X_box
-        lat = lb_Latitude + per_lat * y_box
+        lon = lb_Longitude + per_lon * X_box - 0.5 *  per_lon
+        lat = lb_Latitude + per_lat * y_box - 0.5 * per_lat
 
         ll_pred.append([lon, lat])
     ll_true = np.delete(y_true, 0, axis=1).tolist()

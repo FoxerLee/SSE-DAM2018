@@ -91,8 +91,8 @@ def pos_error(y_true, y_pred):
         if X_box == 0:
             X_box = X_box_num
             y_box -= 1
-        lon = lb_Longitude + per_lon * X_box
-        lat = lb_Latitude + per_lat * y_box
+        lon = lb_Longitude + per_lon * X_box - 0.5 *  per_lon
+        lat = lb_Latitude + per_lat * y_box - 0.5 * per_lat
 
         ll_pred.append([lon, lat])
     ll_true = np.delete(y_true, 0, axis=1).tolist()
@@ -221,7 +221,7 @@ def cdf_figure(errors_all):
     plt.xlabel('CDF')
     plt.ylabel('Error(meters)')
     X_list = []
-    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
     for i in range(1220):
         X_list.append((float(i) / 1220.0))
 
@@ -238,12 +238,17 @@ def cdf_figure(errors_all):
 def time_figure(times):
     plt.figure('Comparision 2G DATA')
     # ax = plt.gca()
-    times = [3.16, 2.18, 4.08, 8.14, 75.75, 55.69, 1012.13]
-    plt.xlabel('Time(s)')
-    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    times = [1.16, 2.18, 2.08, 8.14, 45.75, 21.69, 133.1]
+    plt.ylabel('Time(s)')
+    labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
     # X = [i for i in range(1, 8)]
     # for i in range(7):
-    plt.barh(labels, times, linewidth=2, alpha=0.6)
+    x = np.arange(len(labels)) + 1
+    plt.bar(x, times, width=0.35, align='center', color='c', alpha=0.8)
+    plt.xticks(x, labels, size='small', rotation=30)
+    for a, b in zip(x, times):
+        plt.text(a, b + 0.05, '%.2f' % b, ha='center', va='bottom', fontsize=7)
+    # plt.barh(labels, times, linewidth=2, alpha=0.6)
 
-    plt.legend()
+    # plt.legend()
     plt.show()

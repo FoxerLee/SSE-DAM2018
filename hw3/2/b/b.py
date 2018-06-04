@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
+import warnings
+warnings.filterwarnings('ignore')
 
 from pandas import DataFrame
 from scipy import interp
@@ -15,6 +17,31 @@ from sklearn.metrics import average_precision_score, roc_auc_score, recall_score
 from sklearn.metrics import roc_curve, auc
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
+
+import util
+
+
+def least_squares(x, y):
+    """
+    最小二乘法计算出拟合直线点斜率
+    :param x:
+    :param y:
+    :return:
+    """
+    x_ = x.mean()
+    y_ = y.mean()
+    m = np.zeros(1)
+    n = np.zeros(1)
+    k = np.zeros(1)
+    p = np.zeros(1)
+    for i in range(len(x)):
+        k = (x[i]-x_) * (y[i]-y_)
+        m += k
+        p = np.square(x[i]-x_)
+        n = n + p
+    a = m/n
+    b = y_ - a*x_
+    return a
 
 
 def feature_name_generator():
@@ -42,13 +69,19 @@ def feature_name_generator():
     # TYPE.2 AGG feature - user AGG
     for a in aggrs:
         feature_names.append(type2+'_'+type1+'_'+a+'_'+'count_AGG_'+overall)
-    # TYPE.2 AGG feature - month AGG
+    # TYPE.2 AGG feature - month AGG & TYPE.4 complex feature - trend
     for a in aggrs:
         feature_names.append(type1 + '_' + type2 + '_month_count_' + a)
+    # feature_names.append(type1 + '_' + type2 + '_month_count_trend')
     for a in aggrs:
         feature_names.append(type2 + '_' + type1 + '_month_penetration_' + a)
+    # feature_names.append(type2 + '_' + type1 + '_month_penetration_trend')
     for a in aggrs:
         feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
+    # feature_names.append(type1 + '_' + type2 + '_month_diversity_trend')
+
+    # feature_names.append(type1 + '_' + type2 + '_repeat_' + overall)
+    # feature_names.append(type2 + '_' + type1 + '_repeat_' + overall)
 
     feature_names.append('label')
     # print(feature_names)
@@ -169,7 +202,26 @@ def train_generator():
     print(datetime.datetime.now() - start)
     print("***************")
 
-    start = datetime.datetime.now()
+    # start = datetime.datetime.now()
+    # train_datas.set_index(['vipno'], inplace=True, drop=False)
+    # ds = datas[feature_names[32]].as_matrix().tolist()
+    # for row in ds:
+    #     if row == 0:
+    #         continue
+    #     tmp = row.split('-')
+    #     train_datas.loc[tmp[0], feature_names[32]] = float(tmp[1])
+    #
+    # train_datas.set_index(['pluno'], inplace=True, drop=False)
+    # ds = datas[feature_names[33]].as_matrix().tolist()
+    # for row in ds:
+    #     if row == 0:
+    #         continue
+    #     tmp = row.split('-')
+    #     train_datas.loc[tmp[0], feature_names[33]] = float(tmp[1])
+    # start = datetime.datetime.now()
+    # print(datetime.datetime.now() - start)
+    # print("***************")
+    # train_datas.set_index(['vipno', 'pluno'], inplace=True, drop=False)
     labels = datas['U_I_month_count_05'].as_matrix().tolist()
     indexs = train_datas.index
     for label in labels:
@@ -187,7 +239,7 @@ def draw_roc(fprs, tprs, thresholds, aucs):
     plt.figure()
     lw = 2
     plt.figure(figsize=(10, 10))
-    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
     for i in range(len(aucs)):
         plt.plot(fprs[i], tprs[i], lw=lw,
                  label=labels[i] + ' ROC curve (auc = %0.3f)' % aucs[i])
@@ -214,7 +266,7 @@ def main():
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
     # X, y = ros.fit_sample(X, y)
-    X, y = SMOTE(kind='borderline1').fit_sample(X, y)
+    # X, y = SMOTE(kind='borderline1').fit_sample(X, y)
 
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -357,7 +409,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = AdaBoostClassifier(base_estimator=None)
+        clf = AdaBoostClassifier(n_estimators=100, learning_rate=0.01, algorithm='SAMME.R')
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -419,7 +471,8 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = GradientBoostingClassifier(n_estimators=2)
+        clf = GradientBoostingClassifier(learning_rate=0.01, n_estimators=60, max_features=19, subsample=0.85,
+                                         max_depth=3, min_samples_split=300)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -445,4 +498,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    util.figure()

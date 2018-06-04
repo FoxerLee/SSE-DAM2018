@@ -15,6 +15,9 @@ from sklearn.metrics import average_precision_score, roc_auc_score, recall_score
 from sklearn.metrics import roc_curve, auc
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.combine import SMOTEENN
+
+import util
 
 
 def feature_name_generator():
@@ -208,14 +211,16 @@ def main():
     train = train_datas.as_matrix()
     X = np.delete(train, train.shape[1] - 1, axis=1)
     y = train[:, train.shape[1] - 1]
+
     # 用于做降采样，以确保正负样本的数量相近
     # rus = RandomUnderSampler(return_indices=True)
     # X, y, idx_resampled = rus.fit_sample(X, y)
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
     # X, y = ros.fit_sample(X, y)
-    X, y = SMOTE(kind='borderline1').fit_sample(X, y)
-
+    # X, y = SMOTE(kind='borderline1').fit_sample(X, y)
+    smote_enn = SMOTEENN(random_state=0)
+    X, y = smote_enn.fit_sample(X, y)
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
@@ -223,6 +228,8 @@ def main():
     all_tprs = []
     all_thresholds = []
     all_aucs = []
+    all_pres = []
+    all_recalls = []
 
     # 高斯朴素贝叶斯分类器
     overall_pres = []
@@ -236,19 +243,22 @@ def main():
         gnb = GaussianNB()
         gnb.fit(X_train, y_train)
         y_pred = gnb.predict(X_test)
+
         y_pred_proba = gnb.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
         fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
-
+        print(classification_report(y_test, y_pred))
     mean_tpr /= 10
     mean_tpr[-1] = 1.0  # 坐标最后一个点为（1,1）
     mean_auc = auc(mean_fpr, mean_tpr)
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Gaussian")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -264,7 +274,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        neigh = KNeighborsClassifier(n_neighbors=3)
+        neigh = KNeighborsClassifier()
         neigh.fit(X_train, y_train)
         y_pred = neigh.predict(X_test)
         y_pred_proba = neigh.predict_proba(X_test)
@@ -280,6 +290,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("KNeighbors")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -295,7 +307,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = DecisionTreeClassifier()
+        clf = DecisionTreeClassifier(max_depth=20, max_leaf_nodes=3)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -311,6 +323,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("DecisionTree")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -342,6 +356,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("RandomForest")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -357,7 +373,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = AdaBoostClassifier(base_estimator=None)
+        clf = AdaBoostClassifier(DecisionTreeClassifier(max_depth=20), learning_rate=0.01, n_estimators=90)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -373,6 +389,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("AdaBoost")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -404,6 +422,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Bagging")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -419,7 +439,8 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = GradientBoostingClassifier(n_estimators=2)
+        clf = GradientBoostingClassifier(learning_rate=0.01, n_estimators=50,
+                                         max_depth=13, max_features=19, subsample=0.6)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -435,6 +456,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("GradientBoosting")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -442,6 +465,7 @@ def main():
     print("*********************")
 
     draw_roc(all_fprs, all_tprs, all_thresholds, all_aucs)
+    util.figure(all_pres, all_recalls, all_aucs)
 
 
 if __name__ == '__main__':

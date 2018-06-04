@@ -213,6 +213,33 @@ def X_Y_money_AGG(datas, type1, type2):
     return mean, std, max, median
 
 
+def X_Y_repeat(datas, type1, type2):
+    """
+    对于type1字段，针对type2字段统计购买的次数，计算次数大于2的type2字段的个数
+    :param datas:
+    :param type1:
+    :param type2:
+    :return:
+    """
+    types1 = list(set(datas[type1].as_matrix().tolist()))
+    aggr = dict.fromkeys(types1, [])
+    for index, data in datas.iterrows():
+        aggr[data[type1]] = list(aggr[data[type1]] + [data[type2]])
+
+    res = []
+    for (key, value) in aggr.items():
+        # -1代表是空值
+        if len(set(value)) != 0 and key != -1:
+            tmp = 0
+            for i in set(value):
+                if value.count(i) > 1:
+                    tmp += 1
+
+            res.append(str(key)+'-'+str(tmp))
+
+    return res
+
+
 def main():
     month_datas = add_month_day()
     # 填补bndno的空值
@@ -556,6 +583,83 @@ def main():
     print(datetime.datetime.now() - start)
     print("*************************")
     # print(references)
+
+    print("TYPE.4 complex feature - repeat feature")
+    start = datetime.datetime.now()
+    # 对于pluno字段，针对vipno字段统计购买的次数，计算次数大于2的vipno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'pluno', 'vipno')
+    tmp = DataFrame(res, columns=['I_U_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'pluno', 'vipno')
+    tmp = DataFrame(res, columns=['I_U_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于bndno字段，针对vipno字段统计购买的次数，计算次数大于2的vipno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'bndno', 'vipno')
+    tmp = DataFrame(res, columns=['B_U_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'bndno', 'vipno')
+    tmp = DataFrame(res, columns=['B_U_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于dptno字段，针对vipno字段统计购买的次数，计算次数大于2的vipno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'dptno', 'vipno')
+    tmp = DataFrame(res, columns=['C_U_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'dptno', 'vipno')
+    tmp = DataFrame(res, columns=['C_U_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于vipno字段，针对pluno字段统计购买的次数，计算次数大于2的pluno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'vipno', 'pluno')
+    tmp = DataFrame(res, columns=['U_I_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'vipno', 'pluno')
+    tmp = DataFrame(res, columns=['U_I_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于vipno字段，针对bndno字段统计购买的次数，计算次数大于2的bndno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'vipno', 'bndno')
+    tmp = DataFrame(res, columns=['U_B_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'vipno', 'bndno')
+    tmp = DataFrame(res, columns=['U_B_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    # 对于vipno字段，针对dptno字段统计购买的次数，计算次数大于2的dptno字段的个数
+    # 2,3,4月
+    datas = pd.concat([month_datas.loc['02'], month_datas.loc['03'], month_datas.loc['04']])
+    res = X_Y_repeat(datas, 'vipno', 'dptno')
+    tmp = DataFrame(res, columns=['U_C_repeat_234'])
+    references = pd.concat([references, tmp], axis=1)
+    # 5,6,7月
+    datas = pd.concat([month_datas.loc['05'], month_datas.loc['06'], month_datas.loc['07']])
+    res = X_Y_repeat(datas, 'vipno', 'dptno')
+    tmp = DataFrame(res, columns=['U_C_repeat_567'])
+    references = pd.concat([references, tmp], axis=1)
+
+    print(datetime.datetime.now() - start)
+    print("*************************")
 
     references.to_csv("../references.csv")
     # print(month_datas)

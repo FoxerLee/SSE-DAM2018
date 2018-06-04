@@ -54,13 +54,13 @@ def main():
 
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-    param_test1 = {'n_estimators': range(30, 101, 10),
-                   'learning_rate': np.arange(0.01, 0.1, 10),
-                   'base_estimator': [GaussianNB(), KNeighborsClassifier(), DecisionTreeClassifier()],
-                   'algorithm': ['SAMME', 'SAMME.R']}
+    # param_test1 = {'n_estimators': range(30, 101, 10),
+    #                'learning_rate': np.arange(0.01, 0.1, 10)}
+
     # param_test2 = {'algorithm' : ['SAMME', 'SAMME.R']}
-    gsearch1 = GridSearchCV(estimator=AdaBoostClassifier(),
-                            param_grid=param_test1, scoring='f1_micro', cv=5)
+    param_test3 = {'base_estimator': [GaussianNB(), DecisionTreeClassifier()]}
+    gsearch1 = GridSearchCV(estimator=AdaBoostClassifier(n_estimators=30, learning_rate=0.01, algorithm='SAMME.R'),
+                            param_grid=param_test3, scoring='f1_micro', cv=5)
     gsearch1.fit(np.delete(X, 0, axis=1), y[:, 0])
     print("Best param: {}".format(gsearch1.best_params_))
     print("Best score: {}".format(gsearch1.best_score_))

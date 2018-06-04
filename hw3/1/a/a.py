@@ -184,7 +184,8 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = AdaBoostClassifier(base_estimator=None)
+        clf = AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=20), learning_rate=0.01, n_estimators=30,
+                                 algorithm='SAMME.R')
         y_pred = clf.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
         overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
         overall_pres.append(overall_pre)
@@ -277,6 +278,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # utils.time_figure([])
+    # main()
+    utils.time_figure([])
 
