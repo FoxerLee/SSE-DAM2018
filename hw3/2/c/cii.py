@@ -20,12 +20,12 @@ from imblearn.combine import SMOTEENN
 import util
 
 
-def feature_name_generator():
+def feature_name_generator(months, overall):
     type1 = 'U'
     type2 = 'B'
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     aggrs = ['mean', 'std', 'max', 'median']
-    overall = '234'
+    # overall = '234'
     feature_names = []
     # TYPE.1 count/ratio - count
     for m in months:
@@ -59,10 +59,10 @@ def feature_name_generator():
     return feature_names
 
 
-def train_generator():
+def train_generator(months, overall, label_month):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
-    indexs = datas['U_B_overall_count_234'].as_matrix().tolist()
+    indexs = datas['U_B_overall_count_'+overall].as_matrix().tolist()
 
     vps = []
     for i in indexs:
@@ -72,7 +72,7 @@ def train_generator():
         # tmp[0]是vipno，tmp[1]是bndno
         vps.append([tmp[0], tmp[1]])
     vps = np.array(vps)
-    feature_names = feature_name_generator()
+    feature_names = feature_name_generator(months, overall)
 
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'bndno'], dtype='object')
@@ -138,7 +138,7 @@ def train_generator():
     print(datetime.datetime.now() - start)
     print("***************")
 
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     start = datetime.datetime.now()
     train_datas.set_index(['vipno', 'bndno'], inplace=True, drop=False)
     for index, row in train_datas.iterrows():
@@ -173,7 +173,7 @@ def train_generator():
     print("***************")
 
     start = datetime.datetime.now()
-    labels = datas['U_B_month_count_05'].as_matrix().tolist()
+    labels = datas['U_B_month_count_'+label_month].as_matrix().tolist()
     indexs = train_datas.index
     for label in labels:
         # 0代表空值
@@ -205,22 +205,42 @@ def draw_roc(fprs, tprs, thresholds, aucs):
 
 
 def main():
-    train_datas = train_generator()
+    print("Generator train data!")
+    months = ['02', '03', '04']
+    overall = '234'
+    label_month = '05'
+    train_datas = train_generator(months, overall, label_month)
     # train_datas.to_csv('X.csv')
     train_datas.set_index(['vipno', 'bndno'], inplace=True, drop=True)
     train = train_datas.as_matrix()
-    X = np.delete(train, train.shape[1] - 1, axis=1)
-    y = train[:, train.shape[1] - 1]
+    X_train_all = np.delete(train, train.shape[1] - 1, axis=1)
+    y_train_all = train[:, train.shape[1] - 1]
+
+    print("Generator test data!")
+    months = ['03', '04', '05']
+    overall = '345'
+    label_month = '06'
+    test_datas = train_generator(months, overall, label_month)
+    test_datas.set_index(['vipno', 'bndno'], inplace=True, drop=True)
+    test = test_datas.as_matrix()
+    X_test_all = np.delete(test, test.shape[1] - 1, axis=1)
+    y_test_all = test[:, test.shape[1] - 1]
 
     # 用于做降采样，以确保正负样本的数量相近
     # rus = RandomUnderSampler(return_indices=True)
-    # X, y, idx_resampled = rus.fit_sample(X, y)
+    # X_train_all, y_train_all, idx_resampled = rus.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all, idx_resampled = rus.fit_sample(X_test_all, y_test_all)
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
-    # X, y = ros.fit_sample(X, y)
-    # X, y = SMOTE(kind='borderline1').fit_sample(X, y)
-    smote_enn = SMOTEENN(random_state=0)
-    X, y = smote_enn.fit_sample(X, y)
+    # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
+
+    X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
+    X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
+
+    # smote_enn = SMOTEENN(random_state=0)
+    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 

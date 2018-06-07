@@ -44,12 +44,12 @@ def least_squares(x, y):
     return a
 
 
-def feature_name_generator():
+def feature_name_generator(months, overall):
     type1 = 'U'
     type2 = 'I'
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     aggrs = ['mean', 'std', 'max', 'median']
-    overall = '234'
+    # overall = '234'
     feature_names = []
     # TYPE.1 count/ratio - count
     for m in months:
@@ -89,18 +89,20 @@ def feature_name_generator():
     return feature_names
 
 
-def train_generator():
+def train_generator(months, overall, label_month):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
-    indexs = datas['U_I_overall_count_234'].as_matrix().tolist()
+    indexs = datas['U_I_overall_count_'+overall].as_matrix().tolist()
 
     vps = []
     for i in indexs:
+        if i == 0:
+            continue
         tmp = i.split('-')
         # tmp[0]是vipno，tmp[1]是pluno
         vps.append([tmp[0], tmp[1]])
     vps = np.array(vps)
-    feature_names = feature_name_generator()
+    feature_names = feature_name_generator(months, overall)
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'pluno'], dtype='object')
     # print(tmp)
@@ -168,7 +170,7 @@ def train_generator():
     print(datetime.datetime.now() - start)
     print("***************")
 
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     start = datetime.datetime.now()
     train_datas.set_index(['vipno', 'pluno'], inplace=True, drop=False)
     for index, row in train_datas.iterrows():
@@ -222,7 +224,7 @@ def train_generator():
     # print(datetime.datetime.now() - start)
     # print("***************")
     # train_datas.set_index(['vipno', 'pluno'], inplace=True, drop=False)
-    labels = datas['U_I_month_count_05'].as_matrix().tolist()
+    labels = datas['U_I_month_count_'+label_month].as_matrix().tolist()
     indexs = train_datas.index
     for label in labels:
         # 0代表空值
@@ -254,19 +256,42 @@ def draw_roc(fprs, tprs, thresholds, aucs):
 
 
 def main():
-    train_datas = train_generator()
+    print("Generator train data!")
+    months = ['02', '03', '04']
+    overall = '234'
+    label_month = '05'
+    train_datas = train_generator(months, overall, label_month)
     # train_datas.to_csv('X.csv')
     train_datas.set_index(['vipno', 'pluno'], inplace=True, drop=True)
     train = train_datas.as_matrix()
-    X = np.delete(train, train.shape[1] - 1, axis=1)
-    y = train[:, train.shape[1] - 1]
+    X_train_all = np.delete(train, train.shape[1] - 1, axis=1)
+    y_train_all = train[:, train.shape[1] - 1]
+
+    print("Generator test data!")
+    months = ['03', '04', '05']
+    overall = '345'
+    label_month = '06'
+    test_datas = train_generator(months, overall, label_month)
+    test_datas.set_index(['vipno', 'pluno'], inplace=True, drop=True)
+    test = test_datas.as_matrix()
+    X_test_all = np.delete(test, test.shape[1] - 1, axis=1)
+    y_test_all = test[:, test.shape[1] - 1]
+
     # 用于做降采样，以确保正负样本的数量相近
     # rus = RandomUnderSampler(return_indices=True)
-    # X, y, idx_resampled = rus.fit_sample(X, y)
+    # X_train_all, y_train_all, idx_resampled = rus.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all, idx_resampled = rus.fit_sample(X_test_all, y_test_all)
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
-    # X, y = ros.fit_sample(X, y)
-    # X, y = SMOTE(kind='borderline1').fit_sample(X, y)
+    # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
+
+    X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
+    X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
+
+    # smote_enn = SMOTEENN(random_state=0)
+    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
 
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -283,7 +308,8 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2, random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         gnb = GaussianNB()
         gnb.fit(X_train, y_train)
@@ -314,7 +340,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         neigh = KNeighborsClassifier(n_neighbors=3)
         neigh.fit(X_train, y_train)
@@ -345,7 +373,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = DecisionTreeClassifier()
         clf.fit(X_train, y_train)
@@ -376,7 +406,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = RandomForestClassifier(max_depth=20, random_state=0)
         clf.fit(X_train, y_train)
@@ -407,7 +439,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = AdaBoostClassifier(n_estimators=100, learning_rate=0.01, algorithm='SAMME.R')
         clf.fit(X_train, y_train)
@@ -438,7 +472,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = BaggingClassifier(n_estimators=20)
         clf.fit(X_train, y_train)
@@ -469,7 +505,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = GradientBoostingClassifier(learning_rate=0.01, n_estimators=60, max_features=19, subsample=0.85,
                                          max_depth=3, min_samples_split=300)
@@ -498,5 +536,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    util.figure()
+    main()
+    # util.figure()

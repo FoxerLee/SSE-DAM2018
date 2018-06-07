@@ -221,8 +221,10 @@ def main():
 
         gnb = GaussianNB()
         y_pred = gnb.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+
         errors_cor.append(fix_error(y_train, y_test, y_pred))
         # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
+
         errors.append(utils.pos_error(y_test, y_pred))
         print("Finish range {}".format(i))
         print("Time: {}".format(datetime.datetime.now() - start))
@@ -245,6 +247,7 @@ def main():
 
         neigh = KNeighborsClassifier(n_neighbors=3)
         y_pred = neigh.fit(np.delete(X_train, 0, axis=1), y_train[:, 0]).predict(np.delete(X_test, 0, axis=1))
+        # print(classification_report(y_test[:, 0], y_pred))
         errors_cor.append(fix_error(y_train, y_test, y_pred))
         # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
         errors.append(utils.pos_error(y_test, y_pred))

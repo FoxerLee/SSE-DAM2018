@@ -15,14 +15,17 @@ from sklearn.metrics import average_precision_score, roc_auc_score, recall_score
 from sklearn.metrics import roc_curve, auc
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.combine import SMOTEENN
+
+import util
 
 
-def feature_name_generator():
+def feature_name_generator(months, overall):
     type1 = 'U'
     type2 = 'C'
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     aggrs = ['mean', 'std', 'max', 'median']
-    overall = '234'
+    # overall = '234'
     feature_names = []
     # TYPE.1 count/ratio - count
     for m in months:
@@ -56,10 +59,10 @@ def feature_name_generator():
     return feature_names
 
 
-def train_generator():
+def train_generator(months, overall, label_month):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
-    indexs = datas['U_C_overall_count_234'].as_matrix().tolist()
+    indexs = datas['U_C_overall_count_'+overall].as_matrix().tolist()
 
     vps = []
     for i in indexs:
@@ -69,7 +72,7 @@ def train_generator():
         # tmp[0]是vipno，tmp[1]是vptno
         vps.append([tmp[0], tmp[1]])
     vps = np.array(vps)
-    feature_names = feature_name_generator()
+    feature_names = feature_name_generator(months, overall)
 
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'vptno'], dtype='object')
@@ -135,7 +138,7 @@ def train_generator():
     print(datetime.datetime.now() - start)
     print("***************")
 
-    months = ['02', '03', '04']
+    # months = ['02', '03', '04']
     start = datetime.datetime.now()
     train_datas.set_index(['vipno', 'vptno'], inplace=True, drop=False)
     for index, row in train_datas.iterrows():
@@ -170,7 +173,7 @@ def train_generator():
     print("***************")
 
     start = datetime.datetime.now()
-    labels = datas['U_C_month_count_05'].as_matrix().tolist()
+    labels = datas['U_C_month_count_'+label_month].as_matrix().tolist()
     indexs = train_datas.index
     for label in labels:
         # 0代表空值
@@ -202,19 +205,42 @@ def draw_roc(fprs, tprs, thresholds, aucs):
 
 
 def main():
-    train_datas = train_generator()
+    print("Generator train data!")
+    months = ['02', '03', '04']
+    overall = '234'
+    label_month = '05'
+    train_datas = train_generator(months, overall, label_month)
     # train_datas.to_csv('X.csv')
     train_datas.set_index(['vipno', 'vptno'], inplace=True, drop=True)
     train = train_datas.as_matrix()
-    X = np.delete(train, train.shape[1] - 1, axis=1)
-    y = train[:, train.shape[1] - 1]
+    X_train_all = np.delete(train, train.shape[1] - 1, axis=1)
+    y_train_all = train[:, train.shape[1] - 1]
+
+    print("Generator test data!")
+    months = ['03', '04', '05']
+    overall = '345'
+    label_month = '06'
+    test_datas = train_generator(months, overall, label_month)
+    test_datas.set_index(['vipno', 'vptno'], inplace=True, drop=True)
+    test = test_datas.as_matrix()
+    X_test_all = np.delete(test, test.shape[1] - 1, axis=1)
+    y_test_all = test[:, test.shape[1] - 1]
+
     # 用于做降采样，以确保正负样本的数量相近
     # rus = RandomUnderSampler(return_indices=True)
-    # X, y, idx_resampled = rus.fit_sample(X, y)
+    # X_train_all, y_train_all, idx_resampled = rus.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all, idx_resampled = rus.fit_sample(X_test_all, y_test_all)
     # 同理测试过采样效果
     # ros = RandomOverSampler(random_state=0)
-    # X, y = ros.fit_sample(X, y)
-    X, y = SMOTE(kind='borderline1').fit_sample(X, y)
+    # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
+
+    X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
+    X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
+
+    # smote_enn = SMOTEENN(random_state=0)
+    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
 
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -223,6 +249,8 @@ def main():
     all_tprs = []
     all_thresholds = []
     all_aucs = []
+    all_pres = []
+    all_recalls = []
 
     # 高斯朴素贝叶斯分类器
     overall_pres = []
@@ -236,20 +264,22 @@ def main():
         gnb = GaussianNB()
         gnb.fit(X_train, y_train)
         y_pred = gnb.predict(X_test)
+
         y_pred_proba = gnb.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
-        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:,1], pos_label=1)
-
+        fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
-
+        print(classification_report(y_test, y_pred))
     mean_tpr /= 10
     mean_tpr[-1] = 1.0  # 坐标最后一个点为（1,1）
     mean_auc = auc(mean_fpr, mean_tpr)
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Gaussian")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -265,7 +295,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        neigh = KNeighborsClassifier(n_neighbors=3)
+        neigh = KNeighborsClassifier()
         neigh.fit(X_train, y_train)
         y_pred = neigh.predict(X_test)
         y_pred_proba = neigh.predict_proba(X_test)
@@ -281,6 +311,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("KNeighbors")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -296,7 +328,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = DecisionTreeClassifier()
+        clf = DecisionTreeClassifier(max_depth=20, max_leaf_nodes=3)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -312,6 +344,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("DecisionTree")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -343,6 +377,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("RandomForest")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -358,7 +394,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = AdaBoostClassifier(base_estimator=None)
+        clf = AdaBoostClassifier(DecisionTreeClassifier(max_depth=20), learning_rate=0.01, n_estimators=90)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -374,6 +410,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("AdaBoost")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -405,6 +443,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Bagging")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -420,7 +460,8 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        clf = GradientBoostingClassifier(n_estimators=2)
+        clf = GradientBoostingClassifier(learning_rate=0.01, n_estimators=50,
+                                         max_depth=13, max_features=19, subsample=0.6)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         y_pred_proba = clf.predict_proba(X_test)
@@ -436,6 +477,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("GradientBoosting")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -443,6 +486,7 @@ def main():
     print("*********************")
 
     draw_roc(all_fprs, all_tprs, all_thresholds, all_aucs)
+    util.figure(all_pres, all_recalls, all_aucs)
 
 
 if __name__ == '__main__':

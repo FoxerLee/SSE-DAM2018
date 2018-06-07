@@ -278,6 +278,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    utils.time_figure([])
+    main()
+    # utils.time_figure([])
 
