@@ -263,8 +263,8 @@ def main():
     # X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
 
-    # smote_enn = SMOTEENN(random_state=0)
-    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    smote_enn = SMOTEENN(random_state=0)
+    X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]

@@ -235,11 +235,11 @@ def main():
     # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
 
-    X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
-    X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
+    # X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
 
-    # smote_enn = SMOTEENN(random_state=0)
-    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    smote_enn = SMOTEENN(random_state=0)
+    X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -258,7 +258,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         gnb = GaussianNB()
         gnb.fit(X_train, y_train)
@@ -270,7 +272,7 @@ def main():
         fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
-        print(classification_report(y_test, y_pred))
+        # print(classification_report(y_test, y_pred))
     mean_tpr /= 10
     mean_tpr[-1] = 1.0  # 坐标最后一个点为（1,1）
     mean_auc = auc(mean_fpr, mean_tpr)
@@ -292,7 +294,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         neigh = KNeighborsClassifier()
         neigh.fit(X_train, y_train)
@@ -325,7 +329,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = DecisionTreeClassifier(max_depth=20, max_leaf_nodes=3)
         clf.fit(X_train, y_train)
@@ -358,7 +364,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = RandomForestClassifier(max_depth=20, random_state=0)
         clf.fit(X_train, y_train)
@@ -391,7 +399,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = AdaBoostClassifier(DecisionTreeClassifier(max_depth=20), learning_rate=0.01, n_estimators=90)
         clf.fit(X_train, y_train)
@@ -424,7 +434,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = BaggingClassifier(n_estimators=20)
         clf.fit(X_train, y_train)
@@ -457,7 +469,9 @@ def main():
     mean_fpr = np.linspace(0, 1, 100)
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         clf = GradientBoostingClassifier(learning_rate=0.01, n_estimators=50,
                                          max_depth=13, max_features=19, subsample=0.6)

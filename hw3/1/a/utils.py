@@ -220,16 +220,18 @@ def cdf_figure(errors_all):
     # ax = plt.gca()
     plt.xlabel('CDF')
     plt.ylabel('Error(meters)')
-    X_list = []
+    # X_list = []
     labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
-    for i in range(1220):
-        X_list.append((float(i) / 1220.0))
+    # for i in range(1220):
+    #     X_list.append((float(i) / 1220.0))
 
     for i in range(len(errors_all)):
         errors = np.array(errors_all[i])
         mean_errors = errors.mean(axis=0)
         # print(mean_errors)
-        plt.plot(X_list, list(mean_errors), '--', linewidth=1, alpha=0.6, label=labels[i])
+        plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))],
+                 list(mean_errors), '--', linewidth=1,
+                 alpha=0.6, label=labels[i] + " median error: %.2f" % np.percentile(mean_errors, 50))
 
     plt.legend()
     plt.show()
@@ -238,7 +240,7 @@ def cdf_figure(errors_all):
 def time_figure(times):
     plt.figure('Comparision 2G DATA')
     # ax = plt.gca()
-    times = [1.16, 2.18, 2.08, 8.14, 45.75, 21.69, 133.1]
+    # times = [1.16, 2.18, 2.08, 8.14, 45.75, 21.69, 133.1]
     plt.ylabel('Time(s)')
     labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
     # X = [i for i in range(1, 8)]
@@ -251,4 +253,38 @@ def time_figure(times):
     # plt.barh(labels, times, linewidth=2, alpha=0.6)
 
     # plt.legend()
+    plt.show()
+
+
+def figure(overall_pres_all, top10_pres_all, top10_recalls_all, top10_fs_all):
+    # ax = plt.gca()
+    # pres = [0.810, 0.655, 0.655, 0.712, 0.721, 0.717, 0.728]
+    # racalls = [0.426, 0.644, 0.633, 0.624, 0.668, 0.672, 0.686]
+    # aucs = [0.769, 0.688, 0.648, 0.754, 0.783, 0.775, 0.789]
+    plt.xlabel('Classifier')
+    # plt.ylabel('Classifier')
+    total_width, n = 0.9, 3
+    width = total_width / n
+    labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    x = np.arange(len(labels))
+    plt.xticks(range(len(labels)), labels, rotation=30)
+    plt.plot(overall_pres_all, 'x--', label='overall-precision')
+    for a, b in zip(x, overall_pres_all):
+        plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
+
+    plt.plot(top10_pres_all, '.--', label='per-precision(top10)')
+    for a, b in zip(x, top10_pres_all):
+        plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
+
+    plt.plot(top10_recalls_all, '*--', label='per-recall(top10)')
+    for a, b in zip(x, top10_recalls_all):
+        plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
+
+    plt.plot(top10_fs_all, '#--', label='per-f_measurement(top10)')
+    for a, b in zip(x, top10_fs_all):
+        plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
+
+    plt.ylim([0.0, 1.0])
+
+    plt.legend()
     plt.show()

@@ -17,6 +17,7 @@ from sklearn.metrics import average_precision_score, roc_auc_score, recall_score
 from sklearn.metrics import roc_curve, auc
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.combine import SMOTEENN
 
 import util
 
@@ -286,11 +287,11 @@ def main():
     # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
 
-    X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
-    X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
+    # X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
+    # X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
 
-    # smote_enn = SMOTEENN(random_state=0)
-    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    smote_enn = SMOTEENN(random_state=0)
+    X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
 
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
@@ -300,6 +301,8 @@ def main():
     all_tprs = []
     all_thresholds = []
     all_aucs = []
+    all_pres = []
+    all_recalls = []
 
     # 高斯朴素贝叶斯分类器
     overall_pres = []
@@ -327,6 +330,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Gaussian")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -360,6 +365,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("KNeighbors")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -393,6 +400,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("DecisionTree")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -426,6 +435,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("RandomForest")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -459,6 +470,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("AdaBoost")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -492,6 +505,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("Bagging")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -526,6 +541,8 @@ def main():
     all_fprs.append(mean_fpr)
     all_tprs.append(mean_tpr)
     all_aucs.append(mean_auc)
+    all_pres.append(np.mean(np.array(overall_pres)))
+    all_recalls.append(np.mean(np.array(overall_recalls)))
     print("GradientBoosting")
     print("Overall precision: %.3f" % np.mean(np.array(overall_pres)))
     print("Overall recall: %.3f" % np.mean(np.array(overall_recalls)))
@@ -533,6 +550,7 @@ def main():
     print("*********************")
 
     draw_roc(all_fprs, all_tprs, all_thresholds, all_aucs)
+    util.figure(all_pres, all_recalls, all_aucs)
 
 
 if __name__ == '__main__':

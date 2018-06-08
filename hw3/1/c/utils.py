@@ -6,6 +6,19 @@ import math
 from pandas.core.frame import DataFrame
 from math import radians, cos, sin, asin, sqrt
 
+# 左下角坐标
+lb_Longitude = 121.20120490000001
+lb_Latitude = 31.28175691
+# 右上角坐标
+rt_Longitude = 121.2183295
+rt_Latitude = 31.29339344
+# 格子个数是 82*65
+y_box_num = 65
+X_box_num = 82
+# 每一个格子所占的经纬度
+per_lon = (rt_Longitude - lb_Longitude)/X_box_num
+per_lat = (rt_Latitude - lb_Latitude)/y_box_num
+
 
 def haversine(lon1, lat1, lon2, lat2):  # 经度1，纬度1，经度2，纬度2 （十进制度数）
     """
@@ -91,6 +104,45 @@ def gongcan_to_ll():
     return new_data_2g
 
 
+def ll_to_grid(ll_data_2g):
+    """
+    grid_num 是从1开始编号的
+    :param ll_data_2g:
+    :return:
+    """
+
+    # y_box_num = int((haversine(lb_Longitude, lb_Latitude, lb_Longitude, rt_Latitude))/20) + 1
+    # X_box_num = int((haversine(lb_Longitude, lb_Latitude, rt_Longitude, lb_Latitude))/20) + 1
+    # print(X_box_num)
+    # print(y_box_num)
+    # print(ll_data_2g)
+    ll_data_2g_list = ll_data_2g.as_matrix().tolist()
+    for row in ll_data_2g_list:
+        lon = row[2]
+        lat = row[3]
+        # grid_index = calculate_grid(lb_Latitude, lb_Longitude, lat, lon)
+        y_length = haversine(lb_Longitude, lb_Latitude, lb_Longitude, lat)
+        X_length = haversine(lb_Longitude, lb_Latitude, lon, lb_Latitude)
+
+        y = int(y_length / 20)
+        X = int(X_length / 20)
+        if y_length % 20 != 0:
+            y += 1
+        if X_length % 20 != 0:
+            X += 1
+
+        grid_num = X + (y-1) * X_box_num
+        row.append(grid_num)
+
+    indexs = ll_data_2g.columns.values.tolist()
+    indexs.append('grid_num')
+    train_data = DataFrame(ll_data_2g_list)
+    train_data.columns = indexs
+
+    # print(train_data)
+    return train_data
+
+
 def pos_error(y_true, y_pred):
     ll_pred = []
     for (true, pred) in zip(y_true, y_pred):
@@ -98,7 +150,6 @@ def pos_error(y_true, y_pred):
         lat = pred[1] + true[5]
         ll_pred.append([lon, lat])
     ll_true = np.delete(y_true, [0, 1, 4, 5], axis=1)
-
     errors = []
     for (true, pred) in zip(ll_true, ll_pred):
         error = haversine(true[0], true[1], pred[0], pred[1])
@@ -107,36 +158,26 @@ def pos_error(y_true, y_pred):
     return errors
 
 
-def cdf_figure_each(errors_all):
+def cdf_figure(errors_all):
     """
-    绘制的是对于每一个MR所生成的模型的CDF图
+    绘制的是对于每一个MR所生成的模型的CDF图，以及将所有MR的模型预测结果合并在一起后的误差图
     :param errors_all:
     :return:
     """
     plt.figure('Comparision 2G DATA')
     # ax = plt.gca()
-    plt.xlabel('CDF')
+    plt.xlabel('Comparision 2G DATA - CDF figure')
     plt.ylabel('Error(meters)')
 
-    for i in range(len(errors_all)):
-        errors = np.array(errors_all[i][1])
-        mean_errors = errors.mean(axis=0)
-        # print(mean_errors)
-        plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))],
-                 list(mean_errors), linewidth=1, alpha=0.6)
-    # plt.legend()
-    plt.show()
+    # # 绘制的是对于每一个MR所生成的模型的CDF（画出来看都看不....）
+    # for i in range(len(errors_all)):
+    #     errors = np.array(errors_all[i][1])
+    #     mean_errors = errors.mean(axis=0)
+    #     # print(mean_errors)
+    #     plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))], list(mean_errors), '--',
+    #              linewidth=1, alpha=0.6)
 
-
-def cdf_figure_overall(errors_all):
-    """
-    绘制的是将所有MR的模型预测结果合并在一起后的误差图
-    :param errors_all:
-    :return:
-    """
-    plt.figure('Comparision 2G DATA')
-    plt.xlabel('CDF')
-    plt.ylabel('Error(meters)')
+    # 绘制的是将所有MR的模型预测结果合并在一起后的误差
     mean_errors = []
     for i in range(len(errors_all)):
         errors = np.array(errors_all[i][1])
@@ -144,6 +185,31 @@ def cdf_figure_overall(errors_all):
         mean_errors.extend(mean_error)
     mean_errors.sort()
     plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
-             list(mean_errors), linewidth=1, alpha=0.6)
-    # plt.legend()
+             list(mean_errors), '--', linewidth=1, alpha=0.6, label="overall median error(m): %.3f" % np.percentile(mean_errors, 50))
+
+    plt.legend()
+    plt.show()
+
+
+def mean_figure(errors_all):
+    """
+    中位误差值的分布
+    :param errors_all:
+    :return:
+    """
+    labels = []
+    for e in errors_all:
+        labels.append(e[0])
+    x = np.arange(len(labels))
+
+    mean_errors = []
+    for i in range(len(errors_all)):
+        errors = np.array(errors_all[i][1])
+        mean_errors.append(np.percentile(errors.mean(axis=0), 50))
+
+    plt.xticks(range(len(labels)), range(len(labels)))
+    plt.plot(mean_errors, 'x--', label='median-error')
+    for a, b in zip(x, mean_errors):
+        plt.text(a, b, '%.3f' % b, ha='center', va='bottom', fontsize=7)
+    plt.legend()
     plt.show()
