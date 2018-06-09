@@ -31,15 +31,12 @@ def main():
     train_data['rel_Latitude'] = np.array(rel_lat)
 
     # features和labels
-    # X = train_data.drop(['MRTime', 'Longitude', 'Latitude',
-    #                      'Num_connected', 'grid_num'], axis=1, inplace=False).as_matrix()
-    # y = train_data
     train_data.set_index(['Longitude_1', 'Latitude_1'], inplace=True, drop=False)
     train_data.sort_index(inplace=True)
     ids = list(set(train_data.index.tolist()))
 
     y_pred = KMeans(n_init=1, random_state=0).fit_predict(ids)
-    print(y_pred)
+
     # x = [id[0] for id in ids]
     # y = [id[1] for id in ids]
     # plt.scatter(x, y, c=y_pred)

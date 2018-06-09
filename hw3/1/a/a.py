@@ -291,6 +291,15 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # utils.time_figure([])
+
+    # 统计有效的基站信息个数
+    # data_2g = pd.read_csv('../data_2g.csv')
+    # miao = data_2g['Num_connected'].tolist()
+    #
+    # a = set(miao)
+    # for i in a:
+    #     print(i)
+    #     print(miao.count(i))
+    #     print("******")
 
 

@@ -92,12 +92,16 @@ def main():
     for best in topk_best:
         best_data = pd.concat([best_data, train_data.loc[best]], axis=0)
 
+    # print(best_data)
+    # best_data = best_data.sample(frac=0.7)
+    # print(best_data)
     print("\n")
     print("Start correction")
     print("\n")
     new_errors = []  # 用于存储修正后的 top k- 的所有 error
     for worst in topk_worst:
         MS_datas = pd.concat([train_data.loc[worst], best_data])
+        # MS_datas = best_data
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                            'Num_connected'], axis=1, inplace=False).as_matrix()
         y = MS_datas[

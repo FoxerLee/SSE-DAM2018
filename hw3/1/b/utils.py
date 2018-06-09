@@ -179,20 +179,29 @@ def ll_to_grid(ll_data_2g):
     return train_data
 
 
-def cdf_figure(errors_all):
+def cdf_figure(errors_all, errors_all_cor):
     plt.figure('Comparision 2G DATA')
     # ax = plt.gca()
     plt.xlabel('CDF')
     plt.ylabel('Error(meters)')
-    X_list = []
-    labels = ['Gaussian', 'Kmeans', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
-    for i in range(1220):
-        X_list.append((float(i)/1220.0))
+    # X_list = []
+    labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'AdaBoost', 'Bagging', 'GradientBoosting']
+    # labels = ['Gaussian', 'KNeighbors', 'DecisionTree', 'RandomForest', 'Bagging']
 
     for i in range(len(errors_all)):
         errors = np.array(errors_all[i])
         mean_errors = errors.mean(axis=0)
         # print(mean_errors)
-        plt.plot(X_list, list(mean_errors), linewidth=1, alpha=0.6, label=labels[i])
-    plt.legend()
-    plt.show()
+        plt.plot([float(i)/float(len(mean_errors)) for i in range(len(mean_errors))],
+                 list(mean_errors), '--', linewidth=1,
+                 alpha=0.6, label=labels[i] + " origin median error: %.2f" % np.percentile(mean_errors, 50))
+
+        errors = np.array(errors_all_cor[i])
+        mean_errors = errors.mean(axis=0)
+        # print(mean_errors)
+        plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
+                 list(mean_errors), '--', linewidth=1,
+                 alpha=0.6, label=labels[i] + " corrected median error: %.2f" % np.percentile(mean_errors, 50))
+
+        plt.legend()
+        plt.show()
