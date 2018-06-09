@@ -128,22 +128,65 @@ def cdf_figure_each(errors_all):
     plt.show()
 
 
-def cdf_figure_overall(errors_all):
+def cdf_figure(old_errors, new_errors):
     """
-    绘制的是将所有MR的模型预测结果合并在一起后的误差图
+    绘制的是新、旧 error 对应的 CDF 曲线
     :param errors_all:
     :return:
     """
-    plt.figure('Comparision 2G DATA')
-    plt.xlabel('CDF')
+    plt.title('Comparision 2G DATA')
     plt.ylabel('Error(meters)')
+
     mean_errors = []
-    for i in range(len(errors_all)):
-        errors = np.array(errors_all[i][1])
+    for i in range(len(old_errors)):
+        errors = np.array(old_errors[i][1])
         mean_error = errors.mean(axis=0)
         mean_errors.extend(mean_error)
     mean_errors.sort()
     plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
-             list(mean_errors), linewidth=1, alpha=0.6)
+             list(mean_errors), linewidth=1, alpha=0.6, label="c-method median error %.3f" % np.percentile(mean_errors, 50))
+
+    mean_errors = []
+    for i in range(len(new_errors)):
+        errors = np.array(new_errors[i][1])
+        mean_error = errors.mean(axis=0)
+        mean_errors.extend(mean_error)
+    mean_errors.sort()
+    plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
+             list(mean_errors), linewidth=1, alpha=0.6, label="d-method median error %.3f" % np.percentile(mean_errors, 50))
+
+    plt.legend()
+    plt.show()
+
+
+def mean_figure(old_errors, new_errors):
+    """
+    中位误差值的分布
+    :param errors_all:
+    :return:
+    """
+    labels = []
+    for e in old_errors:
+        labels.append(e[0])
+    x = np.arange(len(labels))
+
+    mean_errors_old = []
+    for i in range(len(old_errors)):
+        errors = np.array(old_errors[i][1])
+        mean_errors_old.append(np.percentile(errors.mean(axis=0), 50))
+
+    mean_errors_new = []
+    for i in range(len(new_errors)):
+        errors = np.array(new_errors[i][1])
+        mean_errors_new.append(np.percentile(errors.mean(axis=0), 50))
+
+    plt.xticks(range(len(labels)), range(len(labels)))
+    plt.plot(mean_errors_old, 'x--', label='c-method median error')
+    for a, b in zip(x, mean_errors_old):
+        plt.text(a, b, '%.3f' % b, ha='center', va='bottom', fontsize=7)
+
+    plt.plot(mean_errors_new, '*--', label='d-method median error')
+    for a, b in zip(x, mean_errors_new):
+        plt.text(a, b, '%.3f' % b, ha='center', va='bottom', fontsize=7)
     plt.legend()
     plt.show()

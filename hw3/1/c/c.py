@@ -76,14 +76,14 @@ def main():
             # errors.append(utils.pos_error(y_test, y_pred))
 
         # 将每个数据集的点做出来
-        # plt.title("Median error: %.3f" %np.percentile(np.array(errors).mean(axis=0), 50) +
-        #           " Data amount: {}".format(X.shape[0]))
-        # ax = plt.gca()
-        # ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        # plt.scatter(y[:,2], y[:,3])
-        # plt.xlim([lb_Longitude, rt_Longitude])
-        # plt.ylim([lb_Latitude, rt_Latitude])
-        # plt.show()
+        plt.title("Median error: %.3f" %np.percentile(np.array(errors).mean(axis=0), 50) +
+                  " Data amount: {}".format(X.shape[0]))
+        ax = plt.gca()
+        ax.get_xaxis().get_major_formatter().set_useOffset(False)
+        plt.scatter(y[:,2], y[:,3])
+        plt.xlim([lb_Longitude, rt_Longitude])
+        plt.ylim([lb_Latitude, rt_Latitude])
+        plt.show()
 
         # print("Different data amount: {}".format(len(set(X[:,0]))))
         print("Data amount: {}".format(X.shape[0]))

@@ -257,10 +257,10 @@ def time_figure(times):
 
 
 def figure(overall_pres_all, top10_pres_all, top10_recalls_all, top10_fs_all):
-    # ax = plt.gca()
-    # pres = [0.810, 0.655, 0.655, 0.712, 0.721, 0.717, 0.728]
-    # racalls = [0.426, 0.644, 0.633, 0.624, 0.668, 0.672, 0.686]
-    # aucs = [0.769, 0.688, 0.648, 0.754, 0.783, 0.775, 0.789]
+    # overall_pres_all = [0.108, 0.335, 0.469, 0.479, 0.491, 0.504, 0.422]
+    # top10_pres_all = [0.093, 0.664, 0.831, 0.835, 0.848, 0.839, 0.737]
+    # top10_recalls_all = [0.055, 0.632, 0.775, 0.803, 0.788, 0.802, 0.661]
+    # top10_fs_all = [0.067, 0.618, 0.786, 0.803, 0.806, 0.807, 0.670]
     plt.xlabel('Classifier')
     # plt.ylabel('Classifier')
     total_width, n = 0.9, 3
@@ -280,7 +280,7 @@ def figure(overall_pres_all, top10_pres_all, top10_recalls_all, top10_fs_all):
     for a, b in zip(x, top10_recalls_all):
         plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
 
-    plt.plot(top10_fs_all, '#--', label='per-f_measurement(top10)')
+    plt.plot(top10_fs_all, '^--', label='per-f_measurement(top10)')
     for a, b in zip(x, top10_fs_all):
         plt.text(a, b, '%.2f' % b, ha='center', va='bottom', fontsize=7)
 

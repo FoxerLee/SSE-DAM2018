@@ -185,7 +185,8 @@ def cdf_figure(errors_all):
         mean_errors.extend(mean_error)
     mean_errors.sort()
     plt.plot([float(i) / float(len(mean_errors)) for i in range(len(mean_errors))],
-             list(mean_errors), '--', linewidth=1, alpha=0.6, label="overall median error(m): %.3f" % np.percentile(mean_errors, 50))
+             list(mean_errors), '--', linewidth=1, alpha=0.6,
+             label="overall median error(m): %.3f" % np.percentile(mean_errors, 50))
 
     plt.legend()
     plt.show()

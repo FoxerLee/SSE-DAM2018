@@ -90,7 +90,7 @@ def main():
         # 切分训练集和验证集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
 
-        neigh = KNeighborsClassifier(n_neighbors=3)
+        neigh = KNeighborsClassifier()
         y_pred = neigh.fit(np.delete(X_train, 0, axis=1), y_train[:,0]).predict(np.delete(X_test, 0, axis=1))
         overall_pre, top10_pre, top10_recall, top10_f = utils.precision_recall(y_test[:, 0], y_pred)
         overall_pres.append(overall_pre)
@@ -286,10 +286,11 @@ def main():
     print("****************************")
 
     utils.cdf_figure(errors_all)
-    utils.res_figure(overall_pres_all, top10_pres_all, top10_recalls_all, top10_fs_all)
+    utils.figure(overall_pres_all, top10_pres_all, top10_recalls_all, top10_fs_all)
 
 
 if __name__ == '__main__':
     main()
     # utils.time_figure([])
+
 

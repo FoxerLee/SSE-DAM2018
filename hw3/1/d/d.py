@@ -9,6 +9,13 @@ from sklearn.model_selection import train_test_split
 
 import utils # 减少代码重复
 
+# 左下角坐标
+lb_Longitude = 121.20120490000001
+lb_Latitude = 31.28175691
+# 右上角坐标
+rt_Longitude = 121.2183295
+rt_Latitude = 31.29339344
+
 
 def main():
     train_data = utils.gongcan_to_ll()
@@ -30,24 +37,21 @@ def main():
     train_data['rel_Latitude'] = np.array(rel_lat)
 
     # features和labels
-    # X = train_data.drop(['MRTime', 'Longitude', 'Latitude',
-    #                      'Num_connected', 'grid_num'], axis=1, inplace=False).as_matrix()
-    # y = train_data
     train_data.set_index(['Longitude_1', 'Latitude_1'], inplace=True, drop=False)
     train_data.sort_index(inplace=True)
     ids = list(set(train_data.index.tolist()))
     # print(ids)
 
-    # errors_all = []
+    # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的，同时每一次的实验的数据集也是一样的，从而提升结果的可信度
+    random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+    errors_all = []
     median_errors = []
     for id in ids:
         MS_datas = train_data.loc[id]
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                            'Num_connected'], axis=1, inplace=False).as_matrix()
         y = MS_datas[['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
-
-        # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
-        random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
         # 随机森林
         print("MS {}".format(id))
@@ -67,27 +71,33 @@ def main():
         median_error = np.percentile(np.array(errors).mean(axis=0), 50)
         print("Median error: {}".format(median_error))
         median_errors.append([id, median_error])
-        # errors_all.append([id, errors])
+        errors_all.append([id, errors])
         print("****************************")
     median_errors = DataFrame(median_errors, columns=['id', 'median_error'])
     median_errors.set_index(['median_error'], inplace=True, drop=False)
     median_errors.sort_index(inplace=True)
-    print(median_errors)
+    # print(median_errors)
 
     MS_number = median_errors.shape[0]
     topk_best = median_errors.iloc[:int(MS_number*0.2)]['id'].as_matrix().tolist()
     topk_worst = median_errors.iloc[int(MS_number*0.8):]['id'].as_matrix().tolist()
 
-    # print(topk_best)
-    # print(topk_worst)
+    old_errors = []  # 用于存储没有修正前的 top k- 的所有 error
+    for error in errors_all:
+        if error[0] in topk_worst:
+            old_errors.append([error[0], error[1]])
+
+    # 获取top k+的数据
     best_data = DataFrame()
     for best in topk_best:
         best_data = pd.concat([best_data, train_data.loc[best]], axis=0)
-    # print(best_data)
 
+    print("\n")
+    print("Start correction")
+    print("\n")
+    new_errors = []  # 用于存储修正后的 top k- 的所有 error
     for worst in topk_worst:
         MS_datas = pd.concat([train_data.loc[worst], best_data])
-        # MS_datas = best_data
         X = MS_datas.drop(['IMSI', 'MRTime', 'Longitude', 'Latitude',
                            'Num_connected'], axis=1, inplace=False).as_matrix()
         y = MS_datas[
@@ -98,9 +108,6 @@ def main():
                                    'Num_connected'], axis=1, inplace=False).as_matrix()
         y_worst = worst_data[
                   ['rel_Longitude', 'rel_Latitude', 'Longitude', 'Latitude', 'Longitude_1', 'Latitude_1']].as_matrix()
-
-        # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的，同时每一次的实验的数据集也是一样的，从而提升结果的可信度
-        random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
         # 随机森林
         print("MS {}".format(worst))
@@ -114,17 +121,29 @@ def main():
             error = utils.pos_error(y_test, y_pred)
             errors.append(error)
 
-            # overall_pre, top10_pre, top10_recall = utils.precision_recall(y_test[:, 0], y_pred)
-            # errors.append(utils.pos_error(y_test, y_pred))
+        # 做出每个基站用于加入了新的数据集后的所有训练数据点位置和原始该 MS 基站的数据点位置
+        plt.title("Median error: %.3f" %np.percentile(np.array(errors).mean(axis=0), 50))
+        ax = plt.gca()
+        ax.get_xaxis().get_major_formatter().set_useOffset(False)
+        plt.scatter(y[:, 2], y[:, 3], label='new data')
+        plt.scatter(y_worst[:, 2], y_worst[:, 3], label='old data')
+
+        plt.xlim([lb_Longitude, rt_Longitude])
+        plt.ylim([lb_Latitude, rt_Latitude])
+        plt.legend()
+        plt.show()
+
+        new_errors.append([worst, errors])
         median_error = np.percentile(np.array(errors).mean(axis=0), 50)
         print("Median error: {}".format(median_error))
         # median_errors.append([worst, median_error])
         # errors_all.append([id, errors])
         print("****************************")
 
-    # utils.cdf_figure_each(errors_all)
-    # utils.cdf_figure_overall(errors_all)
+    utils.cdf_figure(old_errors, new_errors)
+    utils.mean_figure(old_errors, new_errors)
 
 
 if __name__ == '__main__':
     main()
+
