@@ -20,7 +20,7 @@ from imblearn.combine import SMOTEENN
 import util
 
 
-def feature_name_generator(months, overall):
+def feature_name_generator(months, overall, predict=False):
     type1 = 'U'
     type2s = ['I', 'B', 'C']
     # months = ['02', '03', '04']
@@ -33,13 +33,6 @@ def feature_name_generator(months, overall):
     feature_names.append('U_overall_count_'+overall)
 
     for type2 in type2s:
-        # for m in months:
-        #     feature_names.append(type1+'_'+type2+'_'+'month_count_'+m)
-        # feature_names.append(type1+'_'+type2+'_'+'overall_count_'+overall)
-        # # TYPE.1 count/ratio - penetration
-        # for m in months:
-        #     feature_names.append(type2+'_'+type1+'_'+'month_penetration_'+m)
-        # feature_names.append(type2 + '_' + type1 + '_' + 'overall_penetration_' + overall)
 
         # TYPE.1 count/ratio - product diversity
         for m in months:
@@ -48,15 +41,6 @@ def feature_name_generator(months, overall):
         # TYPE.2 AGG feature - brand/category/item AGG
         for a in aggrs:
             feature_names.append(type1+'_'+type2+'_'+a+'_'+'count_AGG_'+overall)
-        # # TYPE.2 AGG feature - user AGG
-        # for a in aggrs:
-        #     feature_names.append(type2+'_'+type1+'_'+a+'_'+'count_AGG_'+overall)
-
-        # TYPE.2 AGG feature - month AGG
-        # for a in aggrs:
-        #     feature_names.append(type1 + '_' + type2 + '_month_count_' + a)
-        # for a in aggrs:
-        #     feature_names.append(type2 + '_' + type1 + '_month_penetration_' + a)
         for a in aggrs:
             feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
     for a in aggrs:
@@ -65,13 +49,14 @@ def feature_name_generator(months, overall):
     for type2 in type2s:
         feature_names.append(type1 + '_' + type2 + '_repeat_' + overall)
 
-    feature_names.append('label')
+    if not predict:
+        feature_names.append('label')
     # print(feature_names)
     # print(len(feature_names))
     return feature_names
 
 
-def train_generator(months, overall, label_month):
+def train_generator(months, overall, label_month, predict=False):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
     indexs = datas['U_overall_count_'+overall].as_matrix().tolist()
@@ -84,7 +69,7 @@ def train_generator(months, overall, label_month):
             # tmp[0]是vipno
             vps.append(tmp[0])
     vps = np.array(vps)
-    feature_names = feature_name_generator(months, overall)
+    feature_names = feature_name_generator(months, overall, predict)
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'pluno'], dtype='object')
     # print(tmp)
@@ -196,17 +181,18 @@ def train_generator(months, overall, label_month):
     print(datetime.datetime.now() - start)
     print("***************")
 
-    start = datetime.datetime.now()
-    labels = datas['U_month_count_'+label_month].as_matrix().tolist()
-    indexs = train_datas.index
-    for label in labels:
-        # 0代表空值
-        if label != 0:
-            label = label.split('-')
-            if label[0] in indexs:
-                train_datas.loc[(label[0],), 'label'] = 1
-    print(datetime.datetime.now() - start)
-    print("***************")
+    if not predict:
+        start = datetime.datetime.now()
+        labels = datas['U_month_count_'+label_month].as_matrix().tolist()
+        indexs = train_datas.index
+        for label in labels:
+            # 0代表空值
+            if label != 0:
+                label = label.split('-')
+                if label[0] in indexs:
+                    train_datas.loc[(label[0],), 'label'] = 1
+        print(datetime.datetime.now() - start)
+        print("***************")
 
     return train_datas
 
@@ -263,8 +249,8 @@ def main():
     # X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
 
-    smote_enn = SMOTEENN(random_state=0)
-    X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
+    # smote_enn = SMOTEENN(random_state=0)
+    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
     # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
@@ -290,14 +276,13 @@ def main():
         gnb = GaussianNB()
         gnb.fit(X_train, y_train)
         y_pred = gnb.predict(X_test)
-
         y_pred_proba = gnb.predict_proba(X_test)
         overall_pres.append(precision_score(y_test, y_pred))
         overall_recalls.append(recall_score(y_test, y_pred))
         fpr, tpr, threshold = roc_curve(y_test, y_pred_proba[:, 1], pos_label=1)
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
-        print(classification_report(y_test, y_pred))
+
     mean_tpr /= 10
     mean_tpr[-1] = 1.0  # 坐标最后一个点为（1,1）
     mean_auc = auc(mean_fpr, mean_tpr)

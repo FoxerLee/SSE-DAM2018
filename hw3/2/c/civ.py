@@ -33,7 +33,7 @@ def least_squares(x, y):
     return a
 
 
-def feature_name_generator(months, overall):
+def feature_name_generator(months, overall, predict=False):
     type1 = 'U'
     type2s = ['I', 'B', 'C']
     # months = ['02', '03', '04']
@@ -49,33 +49,6 @@ def feature_name_generator(months, overall):
         feature_names.append('U_month_money_'+month)
     feature_names.append('U_overall_money_'+overall)
 
-    # for type2 in type2s:
-    #     # for m in months:
-    #     #     feature_names.append(type1+'_'+type2+'_'+'month_count_'+m)
-    #     # feature_names.append(type1+'_'+type2+'_'+'overall_count_'+overall)
-    #     # # TYPE.1 count/ratio - penetration
-    #     # for m in months:
-    #     #     feature_names.append(type2+'_'+type1+'_'+'month_penetration_'+m)
-    #     # feature_names.append(type2 + '_' + type1 + '_' + 'overall_penetration_' + overall)
-    #
-    #     # TYPE.1 count/ratio - product diversity
-    #     for m in months:
-    #         feature_names.append(type1 + '_' + type2 + '_' + 'month_diversity_' + m)
-    #     feature_names.append(type1 + '_' + type2 + '_' + 'overall_diversity_' + overall)
-    #     # TYPE.2 AGG feature - brand/category/item AGG
-    #     for a in aggrs:
-    #         feature_names.append(type1+'_'+type2+'_'+a+'_'+'count_AGG_'+overall)
-    #     # # TYPE.2 AGG feature - user AGG
-    #     # for a in aggrs:
-    #     #     feature_names.append(type2+'_'+type1+'_'+a+'_'+'count_AGG_'+overall)
-    #
-    #     # TYPE.2 AGG feature - month AGG
-    #     # for a in aggrs:
-    #     #     feature_names.append(type1 + '_' + type2 + '_month_count_' + a)
-    #     # for a in aggrs:
-    #     #     feature_names.append(type2 + '_' + type1 + '_month_penetration_' + a)
-    #     for a in aggrs:
-    #         feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
     for a in aggrs:
         feature_names.append(type1+'_month_count_'+a)
     feature_names.append(type1 + '_month_count_trend')
@@ -88,13 +61,14 @@ def feature_name_generator(months, overall):
 
     for type2 in type2s:
         feature_names.append(type1 + '_' + type2 + '_' + 'repeat_' + overall)
-    feature_names.append('label')
+    if not predict:
+        feature_names.append('label')
     # print(feature_names)
     # print(len(feature_names))
     return feature_names
 
 
-def train_generator(months, overall, label_month):
+def train_generator(months, overall, label_month, predict=False):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
     indexs = datas['U_overall_money_'+overall].as_matrix().tolist()
@@ -107,7 +81,7 @@ def train_generator(months, overall, label_month):
             # tmp[0]是vipno
             vps.append(tmp[0])
     vps = np.array(vps)
-    feature_names = feature_name_generator()
+    feature_names = feature_name_generator(months, overall, predict)
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'pluno'], dtype='object')
     # print(tmp)
@@ -177,18 +151,18 @@ def train_generator(months, overall, label_month):
 
     print(datetime.datetime.now() - start)
     print("***************")
-
-    start = datetime.datetime.now()
-    labels = datas['U_month_money_'+label_month].as_matrix().tolist()
-    indexs = train_datas.index
-    for label in labels:
-        # 0代表空值
-        if label != 0:
-            label = label.split('-')
-            if label[0] in indexs:
-                train_datas.loc[(label[0],), 'label'] = float(label[1])
-    print(datetime.datetime.now() - start)
-    print("***************")
+    if not predict:
+        start = datetime.datetime.now()
+        labels = datas['U_month_money_'+label_month].as_matrix().tolist()
+        indexs = train_datas.index
+        for label in labels:
+            # 0代表空值
+            if label != 0:
+                label = label.split('-')
+                if label[0] in indexs:
+                    train_datas.loc[(label[0],), 'label'] = float(label[1])
+        print(datetime.datetime.now() - start)
+        print("***************")
 
     return train_datas
 
@@ -196,6 +170,8 @@ def train_generator(months, overall, label_month):
 def money_error(y_true, y_pred):
     res = []
     for (t, p) in zip(y_true, y_pred):
+        # 两种评价指标，所需要的误差为两种情况
+        # res.append(abs(t-p))
         res.append(t-p)
     res.sort()
     return res
@@ -246,22 +222,6 @@ def main():
     X_test_all = np.delete(test, test.shape[1] - 1, axis=1)
     y_test_all = test[:, test.shape[1] - 1]
 
-    # 用于做降采样，以确保正负样本的数量相近
-    # rus = RandomUnderSampler(return_indices=True)
-    # X_train_all, y_train_all, idx_resampled = rus.fit_sample(X_train_all, y_train_all)
-    # X_test_all, y_test_all, idx_resampled = rus.fit_sample(X_test_all, y_test_all)
-    # 同理测试过采样效果
-    # ros = RandomOverSampler(random_state=0)
-    # X_train_all, y_train_all = ros.fit_sample(X_train_all, y_train_all)
-    # X_test_all, y_test_all = ros.fit_sample(X_test_all, y_test_all)
-
-    # X_train_all, y_train_all = SMOTE(kind='borderline1').fit_sample(X_train_all, y_train_all)
-    # X_test_all, y_test_all = SMOTE(kind='borderline1').fit_sample(X_test_all, y_test_all)
-
-    # smote_enn = SMOTEENN(random_state=0)
-    # X_train_all, y_train_all = smote_enn.fit_sample(X_train_all, y_train_all)
-    # X_test_all, y_test_all = smote_enn.fit_sample(X_test_all, y_test_all)
-
     # 通过设置每一次的随机数种子，保证不同分类器每一次的数据集是一样的
     random_states = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
     all_errors = []
@@ -270,77 +230,95 @@ def main():
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = KNeighborsRegressor()
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("KNeighbors median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-
-
+    # print("KNeighbors median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("KNeighbors 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                            np.percentile(np.array(errors).mean(axis=0), 80)))
     # 决策树
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = DecisionTreeRegressor(max_depth=20)
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("DecisionTree median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    # print("DecisionTree median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("DecisionTree 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                            np.percentile(np.array(errors).mean(axis=0), 80)))
 
     # 随机森林
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = RandomForestRegressor(max_depth=20, random_state=0)
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("RandomForest median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-
+    # print("RandomForest median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("RandomForest 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                              np.percentile(np.array(errors).mean(axis=0), 80)))
     # AdaBoost
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = AdaBoostRegressor(n_estimators=90, learning_rate=0.02)
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("AdaBoost median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-
+    # print("AdaBoost median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("AdaBoost 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                              np.percentile(np.array(errors).mean(axis=0), 80)))
     # Bagging
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = BaggingRegressor(n_estimators=20)
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("Bagging median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-
+    # print("Bagging median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("Bagging 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                          np.percentile(np.array(errors).mean(axis=0), 80)))
     # GradientBoosting
     errors = []
     for i in range(10):
         # 切分训练集和验证集
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_states[i])
+        X_train, _, y_train, _ = train_test_split(X_train_all, y_train_all, test_size=0.2,
+                                                  random_state=random_states[i])
+        _, X_test, _, y_test = train_test_split(X_test_all, y_test_all, test_size=0.2, random_state=random_states[i])
 
         regr = GradientBoostingRegressor(learning_rate=0.02, n_estimators=50,
                                          max_depth=13, max_features=19, subsample=0.6)
         y_pred = regr.fit(X_train, y_train).predict(X_test)
         errors.append(money_error(y_test, y_pred))
     all_errors.append(errors)
-    print("GradientBoosting median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
-
-    cdf_figure(all_errors)
+    # print("GradientBoosting median error: {}".format(np.percentile(np.array(errors).mean(axis=0), 50)))
+    print("GradientBoosting 60%: {} -- {}".format(np.percentile(np.array(errors).mean(axis=0), 20),
+                                         np.percentile(np.array(errors).mean(axis=0), 80)))
+    # cdf_figure(all_errors)
 
 
 if __name__ == '__main__':

@@ -143,23 +143,7 @@ def fix_error(y_train, y_test, y_pred):
                     x_dir = -1
                 if before[1] > pred[1]:
                     y_dir = -1
-                # if x_vel_cor != 0.0:
-                #     print("x")
-                #     print(x_vel_true)
-                #     print(x_vel_pred)
-                #     print(x_vel_cor)
-                #     print(MS_datas[r][0])
-                #     MS_datas[r][0] = (pred[3] - before[3]) * x_vel_cor * x_dir + before[0]
-                #     print(MS_datas[r][0])
-                #
-                # if y_vel_cor != 0.0:
-                #     print("y")
-                #     print(y_vel_true)
-                #     print(y_vel_pred)
-                #     print(y_vel_cor)
-                #     print(MS_datas[r][1])
-                #     MS_datas[r][1] = (pred[3] - before[3]) * y_vel_cor * y_dir + before[1]
-                #     print(MS_datas[r][1])
+
                 MS_datas[r][0] = (pred[3] - before[3]) * x_vel_cor * x_dir + before[0]
                 MS_datas[r][1] = (pred[3] - before[3]) * y_vel_cor * y_dir + before[1]
                 # print("=========")
@@ -173,12 +157,6 @@ def fix_error(y_train, y_test, y_pred):
     ll_pred_cor = datas_cor[['Longitude', 'Latitude']].as_matrix().tolist()
     ll_true = np.delete(y_test, [0, 3, 4], axis=1).tolist()
 
-    # for i in range(len(ll_pred_cor)):
-    #
-    #     print(ll_pred_cor[i])
-    #     print(ll_pred[['Longitude', 'Latitude']].as_matrix().tolist()[i])
-    #     print(ll_true[i])
-    #     print("==========")
     errors = []
     for (true, pred) in zip(ll_true, ll_pred_cor):
         error = utils.haversine(true[0], true[1], pred[0], pred[1])

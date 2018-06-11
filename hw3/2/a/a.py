@@ -332,14 +332,14 @@ def month():
 
     # 对于每个vipno，其在每一个月所购买的某种pluno的数量
     for month in months:
-        res = X_Y_count(month_datas.loc[month], 'vipno', 'pluno')
-        U_I_month_counts = DataFrame(res, columns=['U_I_month_qty_' + month])
-        references = pd.concat([references, U_I_month_counts], axis=1)
+        res = X_Y_qty(month_datas.loc[month], 'vipno', 'pluno')
+        datas = DataFrame(res, columns=['U_I_month_qty_' + month])
+        references = pd.concat([references, datas], axis=1)
 
     # 对于每个vipno，其在每一个月所购买的某种dptno的次数
     for month in months:
-        res = X_Y_qty(month_datas.loc[month], 'vipno', 'dptno')
-        datas = DataFrame(res, columns=['U_I_month_qty_' + month])
+        res = X_Y_count(month_datas.loc[month], 'vipno', 'dptno')
+        datas = DataFrame(res, columns=['U_C_month_count_' + month])
         references = pd.concat([references, datas], axis=1)
 
     # 对于每个vipno，其在每一个月所购买的某种bndno的次数

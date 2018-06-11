@@ -20,7 +20,7 @@ from imblearn.combine import SMOTEENN
 import util
 
 
-def feature_name_generator(months, overall):
+def feature_name_generator(months, overall, predict=False):
     type1 = 'U'
     type2 = 'C'
     # months = ['02', '03', '04']
@@ -53,13 +53,14 @@ def feature_name_generator(months, overall):
     for a in aggrs:
         feature_names.append(type1 + '_' + type2 + '_month_diversity_' + a)
 
-    feature_names.append('label')
+    if not predict:
+        feature_names.append('label')
     # print(feature_names)
     # print(len(feature_names))
     return feature_names
 
 
-def train_generator(months, overall, label_month):
+def train_generator(months, overall, label_month, predict=False):
     datas = pd.read_csv("../references.csv", dtype='object')
     datas = datas.fillna(0)
     indexs = datas['U_C_overall_count_'+overall].as_matrix().tolist()
@@ -72,7 +73,7 @@ def train_generator(months, overall, label_month):
         # tmp[0]是vipno，tmp[1]是vptno
         vps.append([tmp[0], tmp[1]])
     vps = np.array(vps)
-    feature_names = feature_name_generator(months, overall)
+    feature_names = feature_name_generator(months, overall, predict)
 
     train_datas = DataFrame(np.zeros(shape=(len(vps), len(feature_names))), columns=feature_names, dtype='float')
     # tmp = DataFrame(vps, columns=['vipno', 'vptno'], dtype='object')
@@ -172,17 +173,18 @@ def train_generator(months, overall, label_month):
     print(datetime.datetime.now() - start)
     print("***************")
 
-    start = datetime.datetime.now()
-    labels = datas['U_C_month_count_'+label_month].as_matrix().tolist()
-    indexs = train_datas.index
-    for label in labels:
-        # 0代表空值
-        if label != 0:
-            label = label.split('-')
-            if (label[0], label[1]) in indexs:
-                train_datas.loc[(label[0], label[1]), 'label'] = 1
-    print(datetime.datetime.now() - start)
-    print("***************")
+    if not predict:
+        start = datetime.datetime.now()
+        labels = datas['U_C_month_count_'+label_month].as_matrix().tolist()
+        indexs = train_datas.index
+        for label in labels:
+            # 0代表空值
+            if label != 0:
+                label = label.split('-')
+                if (label[0], label[1]) in indexs:
+                    train_datas.loc[(label[0], label[1]), 'label'] = 1
+        print(datetime.datetime.now() - start)
+        print("***************")
     return train_datas
 
 
